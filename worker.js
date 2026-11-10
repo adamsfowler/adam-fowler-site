@@ -22,8 +22,21 @@ async function who(req, env) {   // a one-way fingerprint of the address, only t
 }
 const sameSite = req => { try { return HOSTS.test(new URL(req.headers.get('Origin') || req.headers.get('Referer') || '').hostname); } catch { return false; } };
 
+// a short email to Adam for each new message (Cloudflare Email Service). Needs the EMAIL binding, adamfowler.com set up
+// for sending (Cloudflare → Email Service), and ALERT_TO in wrangler.jsonc. If any of that is missing the message is still saved.
+async function alert(env, m) {
+  if (!env.EMAIL || !env.ALERT_TO) return;
+  try {
+    await env.EMAIL.send({
+      to: env.ALERT_TO, from: env.ALERT_FROM || 'website@adamfowler.com', replyTo: m.email,
+      subject: `Message from ${m.name} (adamfowler.com)`,
+      text: `${m.message}\n\n— ${m.name}, ${m.email}${m.place ? '\n' + m.place : ''}\n\nReply to this email to answer them. All messages: https://adamfowler.com/stats`
+    });
+  } catch (e) { console.warn('alert email', e && (e.code || e.message)); }
+}
+
 export default {
-  async fetch(req, env) {
+  async fetch(req, env, ctx) {
     const url = new URL(req.url);
     if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(req);
     const store = env.STORE.get(env.STORE.idFromName('main'));
@@ -53,6 +66,7 @@ export default {
       if (!name || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || !message) return json({ error: 'Please fill in each line.' }, 400);
       const cf = req.cf || {};
       const r = await store.contact({ name, email, message, ip: await who(req, env), place: [cf.city, cf.region, cf.country].filter(Boolean).join(', ') || null, created: new Date().toISOString() });
+      if (r.ok) ctx.waitUntil(alert(env, { name, email, message, place: [cf.city, cf.region, cf.country].filter(Boolean).join(', ') }));
       return json(r, r.ok ? 200 : 429);
     }
 
