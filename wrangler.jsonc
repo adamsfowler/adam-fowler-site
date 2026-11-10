@@ -6,5 +6,8 @@
   "assets": { "directory": ".", "binding": "ASSETS" },
   "durable_objects": { "bindings": [{ "name": "STORE", "class_name": "Store" }] },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Store"] }],
+  // New contact-form messages are emailed here (sent from website@adamfowler.com through Cloudflare Email Service).
+  "send_email": [{ "name": "EMAIL" }],
+  "vars": { "ALERT_TO": "adamsfowler@gmail.com" },
   "observability": { "enabled": true }
 }
