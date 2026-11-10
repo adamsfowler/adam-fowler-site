@@ -1,0 +1,1145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Adam Fowler</title>
+<meta name="description" content="Adam Fowler: drawings in graphite on paper, hand cut and layered.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22%3E%3Crect width=%2216%22 height=%2216%22 fill=%22%23ebebeb%22/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,200;0,300;1,300&display=swap">
+<style>
+/* Layout: the works hang on pieces of gallery wall. A near-white page holds square grey wall tiles on a 3-column grid with 8px gaps;
+   the larger walls stand on a strip of concrete floor. The tiles' grey is the wall in Adam's photos, so the photos sit seamlessly on them.
+   Single light look on purpose: it is a gallery wall. Jost throughout, all thin. */
+:root {
+  color-scheme: light;
+  --page: #f8f8f7;          /* light grey around the walls, a little lighter than the wall boxes #ebebeb (Adam) */
+  --wall: #ebebeb;          /* the wall in the photos, sampled */
+  --ink: #2a2a28;
+  --muted: #6e6e6a;
+  --chip: #2a2a28; --chip-ink: #fbfbfa;
+  --jost: "Jost", "Futura", "Century Gothic", system-ui, sans-serif;
+  --edge: clamp(16px, 2.6vw, 36px);
+  --gap: 3px;
+  --cols: 3;
+  --row: calc((100vw - 2 * var(--edge) - (var(--cols) - 1) * var(--gap)) / var(--cols));
+  --floor: 16.3%;          /* where the floor starts in the wall photo */
+}
+html, body { height: 100%; background: var(--page); color: var(--ink); }
+body { font-family: var(--jost); font-weight: 300; font-size: 16px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+a { color: inherit; text-decoration: none; }
+p { margin: 0; }
+a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-offset: 3px; }
+
+/* header */
+.top { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding-block: calc(var(--edge) + 4px) 0; padding-left: max(var(--edge), env(safe-area-inset-left, 0px)); padding-right: max(var(--edge), env(safe-area-inset-right, 0px)); height: 92px; box-sizing: border-box; font-size: 16px; }
+.top nav { display: flex; gap: 22px; }
+.top { background: transparent; align-items: center; height: auto; padding: 8px 0 18px; margin: var(--edge) max(var(--edge), env(safe-area-inset-right, 0px)) 0 max(var(--edge), env(safe-area-inset-left, 0px)); }  /* the name on a band of wall the width of the works, one thin gap above them */
+.top > a:first-child { color: #85857f; font-weight: 200; font-size: clamp(32px, 3.6vw, 60px); line-height: .95; letter-spacing: -.01em; padding-block: 6px 10px; }
+.top { align-items: flex-end; }
+.top nav { padding-bottom: 12px; }
+.top + main > .grid.works { padding-top: 0; }   /* the name's band runs straight into the works, no line between */
+.top nav a { color: #85857f; font-size: 14px; }  /* Drawings and Bio in the same grey as the name */
+.top nav a[aria-current] { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 6px; }
+@media (hover: hover) { body:has(.top a:hover) .top a:not(:hover) { opacity: .2; } .top a { transition: opacity .3s; } }
+
+/* the wall grid */
+.grid { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); grid-auto-rows: var(--row); gap: var(--gap); padding-block: 36px 120px; padding-left: max(var(--edge), env(safe-area-inset-left, 0px)); padding-right: max(var(--edge), env(safe-area-inset-right, 0px)); }
+.t { position: relative; background: var(--wall); overflow: hidden; display: block; }
+.fl { position: absolute; inset: 0; background: var(--wall) url("wall-floor.jpg") center bottom / cover; }  /* Adam's photo of the gallery wall and concrete floor */
+.t .pic { position: absolute; inset: 0; overflow: hidden; }
+.grid > .grow { overflow: visible; }
+/* the title sits on the wall to the right of the work, never over it; it is counter-scaled so it reads at normal size while the box is enlarged */
+.grow .cap { left: calc(100% + 18px); top: 3%; bottom: auto; white-space: nowrap; transform-origin: left top; transform: scale(calc(1 / var(--grow, 2))); transition: opacity .35s .3s; }
+/* the works on a free-form grid (as on the Dutton page): three columns, some works on double tiles, the same thin gap everywhere */
+.grid.works { --cols: 2; --row: calc((100vw - 2 * var(--edge) - var(--gap)) / 2); grid-auto-flow: dense; }
+.grid.works > .wide { grid-column: 1 / -1; grid-row: span 2; }   /* a work given the full width of the page */  /* a plain grid: two equal square boxes across, the same thin gap everywhere */
+.grid > .big { overflow: visible; }
+.big .pic { position: absolute; inset: 0; overflow: hidden; background: var(--wall); }
+/* the title appears on hover just below the box, on its own strip of wall, so the gaps between works stay even */
+.big .cap { left: 0; right: 0; top: 100%; bottom: auto; padding: 10px 12px 12px; background: var(--wall); z-index: 1; }
+@media (hover: hover) and (min-width: 761px) and (prefers-reduced-motion: no-preference) {
+  .grid > .big { transition: transform 1.6s cubic-bezier(.45, 0, .2, 1), box-shadow 1.6s cubic-bezier(.45, 0, .2, 1); transform-origin: var(--o, center) top; }  /* slow and soft: eases in, glides, settles */
+  .grid > .big .cap { transition: opacity .6s ease .2s; }
+  .grid > .big:hover .cap, .grid > .big:focus-visible .cap { transition: opacity .8s ease .9s; }
+  .grid > .big:hover, .grid > .big:focus-visible { transform: scale(var(--g)); z-index: 5; box-shadow: 0 20px 60px rgba(30, 30, 25, .14); }
+  .grid > .big .cap { transform-origin: left top; transform: scale(calc(1 / var(--g))); right: auto; width: calc(100% * var(--g)); box-sizing: border-box; box-shadow: 0 20px 40px rgba(30, 30, 25, .1); }
+}
+.t img.ph { position: absolute; left: 50.5%; top: 48%; width: 84%; height: 84%; max-width: none; translate: -50% -50%; object-fit: contain; }  /* frame fills most of the tile */
+.cap { position: absolute; left: 16px; bottom: 14px; font-size: 14px; line-height: 1.35; opacity: 0; transition: opacity .35s; pointer-events: none; }
+.cap span { color: var(--muted); }
+.t:hover .cap, .t:focus-visible .cap, .hung a:hover .cap, .hung a:focus-visible .cap { opacity: 1; }
+@media (hover: none) { .cap { opacity: 1; } }
+/* phones and touch screens: the title goes under the work's box */
+@media (hover: none) and (min-width: 761px) { .big .cap { display: none; } }
+@media (max-width: 760px) {
+  .grid > .grow, .grid > .big { aspect-ratio: auto !important; display: flex; flex-direction: column; }
+  .grow .pic, .big .pic { position: relative; inset: auto; aspect-ratio: 1 / 1; }
+  .grow .cap, .big .cap { position: static; transform: none; top: auto; white-space: normal; opacity: 1; padding: 10px 16px 14px; }
+}
+
+/* resting on a work's box enlarges it out over the wall beside it */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .grid > .grow { transition: transform .7s cubic-bezier(.2, .7, .2, 1), box-shadow .7s; will-change: transform; }
+  .grid > .grow-down { transform-origin: left top; }
+  .grid > .grow-up { transform-origin: left bottom; }
+  .grid > .grow:hover, .grid > .grow:focus-visible { transform: scale(var(--grow, 2)); z-index: 5; box-shadow: 0 20px 60px rgba(30, 30, 25, .14); }
+}
+
+/* the artist's wall: text on wall, standing on the floor */
+.wt .txt { position: absolute; left: 9%; top: 50%; translate: 0 -54%; max-width: 30rem; display: grid; gap: 14px; padding-right: 24px; }
+.wt h1 { font-weight: 200; font-size: clamp(30px, 2.8vw, 40px); line-height: 1.1; margin: 0; }
+.wt .dt { color: var(--muted); font-size: 14px; margin-top: -6px; }
+.wt .b { font-size: 15px; line-height: 1.6; color: #45453f; }
+
+/* the long wall: both drawings hung side by side above the floor, at eye level */
+.hung { position: relative; }
+.grid > .hung { aspect-ratio: 2.4; }
+.grid.works + .grid { grid-auto-rows: auto; }
+.hung a { position: absolute; translate: 0 -50%; }
+.hung a .crop { position: absolute; inset: 0; overflow: hidden; }  /* just the frame and its shadow, cut from the wall photo */
+.hung a img { position: absolute; width: 121.95%; height: 111.1%; left: -11%; top: -8.9%; max-width: none; display: block; }
+.hung a .cap { left: 12%; bottom: -8%; translate: 0 100%; }
+.hung .wl { position: absolute; left: 3%; top: 4%; font-size: 13px; color: var(--muted); }
+
+@media (max-width: 760px) {
+  :root { --cols: 1; }
+  .grid.works { --cols: 1; }
+  .grid { grid-auto-rows: auto; padding-top: 12px; }
+  .grid > .t { aspect-ratio: 1 / 1; grid-area: auto !important; }
+  .grid > .wt { aspect-ratio: auto; order: -1; }
+  .wt .fl { display: none; }
+  .wt .txt { position: static; translate: none; max-width: none; padding: 28px 7% 32px; }
+  .grid > .hung { aspect-ratio: 2.4; }
+}
+
+/* ---------- the artwork view: the work on its own wall, details beside it ---------- */
+.vw { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 40px; height: calc(100% - 92px); box-sizing: border-box; padding-block: 36px var(--edge); padding-left: max(var(--edge), env(safe-area-inset-left, 0px)); padding-right: max(var(--edge), env(safe-area-inset-right, 0px)); }
+.panel { position: relative; background: var(--wall); min-height: 0; min-width: 0; }
+.slot { position: absolute; inset: 3% 4%; display: grid; place-items: center; }
+.info { align-self: end; display: grid; gap: 4px; padding-bottom: 4px; }
+.info .t1 { font-weight: 200; font-size: 28px; line-height: 1.2; margin-bottom: 6px; }
+.info .m { color: var(--muted); font-size: 15px; }
+.info .pager { display: flex; gap: 18px; margin-top: 22px; font-size: 15px; }
+.info .pager a:hover, .info .all:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 5px; }
+.info .pager .c { color: var(--muted); font-variant-numeric: tabular-nums; }
+.info .hint { color: var(--muted); font-size: 13px; margin-top: 10px; }
+.info .all { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; margin-top: 26px; }
+@media (max-width: 860px) {
+  .vw { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; gap: 18px; padding-top: 8px; }
+  .info .pager { margin-top: 12px; }
+  .info .all { margin-top: 12px; }
+}
+
+/* viewer internals */
+#site { min-height: 100%; }
+#site.is-work { height: 100%; }
+.hold { position: relative; line-height: 0; touch-action: none; }
+.hold img { width: 100%; height: 100%; display: block; user-select: none; -webkit-user-drag: none; }
+.hold.tiles img { visibility: hidden; }        /* standing back: the sharp photo itself; moving closer: the zoom tiles, which line up with it exactly */
+.hold:not(.tiles) .walk { visibility: hidden; }
+.walk { position: absolute !important; inset: 0; }
+.walk.open { position: fixed !important; inset: auto; z-index: 15; pointer-events: none; }
+.stepback { position: fixed; z-index: 21; top: calc(env(safe-area-inset-top, 0px) + 16px); right: max(16px, env(safe-area-inset-right, 0px)); background: var(--chip); color: var(--chip-ink); border: 0; cursor: pointer; font: 300 14px/1 var(--jost); padding: 11px 16px; }
+.fx { position: fixed; inset: 0; z-index: 16; pointer-events: none; overflow: hidden; }
+/* moving between the grid and a work's page: the work itself travels, on its piece of wall */
+.fly { position: fixed; z-index: 30; overflow: hidden; background: var(--wall); pointer-events: none; will-change: left, top, width, height; }
+.fly img { position: absolute; max-width: none; display: block; }
+#site.fading { transition: opacity .32s ease; }
+/* one-page version (#one): resting on a work opens it to the whole window, right there; walk closer works as on a work page */
+#site.one .grid > .big { transform: none !important; box-shadow: none !important; cursor: zoom-in; }
+/* the magnifier: a thin ring that inverts whatever it passes over; + to open a work, − to step back out. It tightens as you walk closer */
+@media (hover: hover) and (pointer: fine) {
+  #site.one .grid > .big, .stage.lensing, .stage.lensing .sslot, .stage.lensing .sslot * { cursor: none !important; }
+}
+/* clear controls: an Enlarge tag on each work in the grid; Zoom − / + and Close under an opened work */
+.big .enl { position: absolute; right: 12px; bottom: 12px; display: flex; align-items: center; gap: 8px; font-size: 13px; line-height: 1; padding: 8px 12px 8px 10px; background: rgba(251, 251, 250, .9); color: var(--ink, #2b2b28); opacity: 0; transition: opacity .4s ease; pointer-events: none; }
+.big .enl i { position: relative; width: 9px; height: 9px; }
+.big .enl i::before, .big .enl i::after { content: ""; position: absolute; background: currentColor; }
+.big .enl i::before { left: 0; right: 0; top: 4px; height: 1px; }
+.big .enl i::after { top: 0; bottom: 0; left: 4px; width: 1px; }
+.big:hover .enl, .big:focus-visible .enl { opacity: 1; }
+@media (hover: none) { .big .enl { opacity: 1; } }
+.stage .zoomer { position: absolute; left: 50%; bottom: 14px; translate: -50% 0; display: flex; align-items: center; gap: 4px; z-index: 30; }
+.stage .zb { width: 40px; height: 40px; border: 1px solid rgba(43, 43, 40, .35); background: rgba(251, 251, 250, .92); color: inherit; font: 200 22px/1 var(--jost); cursor: pointer; display: grid; place-items: center; padding: 0 0 2px; transition: background-color .3s, border-color .3s, opacity .3s; }
+.stage .zb:hover { background: #fff; border-color: rgba(43, 43, 40, .7); }
+.stage .zb:disabled { opacity: .3; cursor: default; }
+.stage .zl { font-size: 13px; color: var(--muted); padding: 0 10px; }
+.stage .shut { z-index: 30; }
+.stage .zoomer > span { display: none; align-items: center; }
+.stage .sbar { position: absolute; left: 0; right: 0; bottom: 0; height: 60px; background: var(--wall); z-index: 29; }   /* the controls keep a strip of wall of their own, so they stay readable over a close-up */
+.stage[data-zc="buttons"] .v-buttons, .stage[data-zc="words"] .v-words, .stage[data-zc="line"] .v-line, .stage[data-zc="ruler"] .v-ruler, .stage[data-zc="steps"] .v-steps { display: flex; }
+.stage .v-edge, .stage .v-hair { display: none; }
+.stage[data-zc="edge"] .v-edge, .stage[data-zc="hair"] .v-hair { display: block; }
+/* Words: just two quiet words, like the rest of the type */
+.stage .zw { background: none; border: 0; padding: 8px 4px; font: 300 15px/1 var(--jost); color: inherit; cursor: pointer; text-underline-offset: 6px; text-decoration-thickness: 1px; transition: opacity .3s; }
+.stage .zw:hover { text-decoration: underline; }
+.stage .zw:disabled { opacity: .25; cursor: default; text-decoration: none; }
+.stage .zdot { width: 3px; height: 3px; border-radius: 50%; background: currentColor; opacity: .5; margin: 0 16px; }
+/* Distance line: a hairline from far to near; the dot is where you stand. Click or drag along it */
+.stage .v-line { gap: 14px; }
+.stage .zt { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.stage .track { position: relative; width: 220px; height: 28px; cursor: pointer; touch-action: none; }
+.stage .track::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: rgba(43, 43, 40, .3); }
+.stage .fillr { position: absolute; left: 0; top: 50%; height: 1px; width: calc(var(--z, 0) * 100%); background: rgba(43, 43, 40, .9); transition: width .6s cubic-bezier(.3, 0, .2, 1); }
+.stage .knob { position: absolute; top: 50%; left: calc(var(--z, 0) * 100%); width: 11px; height: 11px; margin: -6px 0 0 -6px; border-radius: 50%; background: var(--paper, #fbfbfa); border: 1px solid rgba(43, 43, 40, .9); transition: left .6s cubic-bezier(.3, 0, .2, 1), transform .3s; }
+.stage .track:hover .knob { transform: scale(1.25); }
+.stage .zpick { position: absolute; top: 18px; right: max(28px, env(safe-area-inset-right, 0px)); z-index: 30; display: flex; gap: 14px; align-items: baseline; font-size: 12px; color: var(--muted); background: rgba(251, 251, 250, .85); padding: 6px 10px; }
+.stage .zpick button { background: none; border: 0; padding: 0; font: 300 13px/1 var(--jost); color: var(--ink, #2b2b28); cursor: pointer; }
+.stage .zpick button[aria-pressed="true"] { text-decoration: underline; text-underline-offset: 5px; text-decoration-thickness: 1px; }
+/* Ruler: a measuring line with fine ticks; the dot carries how far you are standing from the work */
+.stage .ruler { width: 340px; height: 34px; }
+.stage .ruler .ticks { position: absolute; left: 0; right: 0; top: calc(50% - 3px); height: 6px; background: repeating-linear-gradient(90deg, rgba(43, 43, 40, .45) 0 1px, transparent 1px calc(100% / 20)); }
+.stage .ruler .ticks::after { content: ""; position: absolute; inset: -3px 0; background: repeating-linear-gradient(90deg, rgba(43, 43, 40, .7) 0 1px, transparent 1px calc(100% / 4)); clip-path: inset(0 -1px 0 0); }
+.stage .read { position: absolute; top: -14px; left: calc(var(--z, 0) * 100%); translate: -50% 0; font-size: 12px; white-space: nowrap; color: var(--ink, #2b2b28); transition: left .6s cubic-bezier(.3, 0, .2, 1); pointer-events: none; }
+/* Steps: five places to stand, from the back of the room to nose to the paper */
+.stage .steps { display: flex; gap: 20px; margin: 0 14px; }
+.stage .steps button { width: 9px; height: 9px; border-radius: 50%; border: 1px solid rgba(43, 43, 40, .8); background: transparent; padding: 0; cursor: pointer; transition: background-color .4s, transform .3s; }
+.stage .steps button:hover { transform: scale(1.35); }
+.stage .steps button.here { background: rgba(43, 43, 40, .85); }
+/* Edge: a tall hairline up the right side on its own narrow band of wall; walking closer moves the dot up */
+.stage .v-edge { position: absolute; right: max(22px, env(safe-area-inset-right, 0px)); top: 50%; translate: 0 -50%; height: 52vh; width: 52px; z-index: 30; background: rgba(235, 235, 235, .9); padding: 34px 0; box-sizing: content-box; }
+.stage .edge { position: absolute; left: 50%; top: 34px; bottom: 34px; width: 28px; translate: -50% 0; height: auto; }
+.stage .edge::before { left: 50%; right: auto; top: 0; bottom: 0; width: 1px; height: auto; background: rgba(43, 43, 40, .35); }
+.stage .edge .knob { left: 50%; top: calc((1 - var(--z, 0)) * 100%); margin: -6px 0 0 -6px; transition: top .6s cubic-bezier(.3, 0, .2, 1), transform .3s; }
+.stage .v-edge .zt { position: absolute; left: 50%; translate: -50% 0; top: 10px; }
+.stage .v-edge .zt.far { top: auto; bottom: 10px; }
+/* Horizon: one hairline across the whole width, along the top of the bottom strip of wall; the distance rides beside the dot */
+.stage .v-hair { position: absolute; left: max(28px, env(safe-area-inset-left, 0px)); right: max(28px, env(safe-area-inset-right, 0px)); bottom: 46px; height: 22px; z-index: 30; }
+.stage .hair { position: absolute; inset: 0; width: auto; height: auto; }
+.stage .hair .read { top: 50%; translate: 12px -55%; }
+
+.stage .scap { z-index: 30; }
+.lens { position: fixed; left: 0; top: 0; z-index: 40; pointer-events: none; opacity: 0; transition: opacity .35s ease; mix-blend-mode: difference; --d: 38px; }
+.lens.on { opacity: 1; }
+.lens i { position: absolute; left: calc(var(--d) / -2); top: calc(var(--d) / -2); width: var(--d); height: var(--d); box-sizing: border-box; border: 1px solid #fff; border-radius: 50%; transition: width .5s cubic-bezier(.3, 0, .2, 1), height .5s cubic-bezier(.3, 0, .2, 1), left .5s cubic-bezier(.3, 0, .2, 1), top .5s cubic-bezier(.3, 0, .2, 1); }
+.lens i::before, .lens i::after { content: ""; position: absolute; left: 50%; top: 50%; background: #fff; transition: transform .4s ease, opacity .4s ease; }
+.lens i::before { width: 9px; height: 1px; margin: 0 0 0 -4.5px; }
+.lens i::after { width: 1px; height: 9px; margin: -4.5px 0 0; }
+.lens.out i::after { transform: scaleY(0); opacity: 0; }                 /* + becomes − */
+/* once you are closer, the circle gains four small arrows: drag to move the work around (Adam) */
+.lens b { position: absolute; left: -29px; top: -29px; width: 58px; height: 58px; opacity: 0; transition: opacity .4s ease, transform .3s cubic-bezier(.3, 0, .2, 1); }
+.lens b svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.lens.move b { opacity: 1; }
+.lens.move i { opacity: 0; }   /* closer: the chosen cursor below replaces the plain circle */
+.lens i { transition: opacity .4s ease, width .5s cubic-bezier(.3, 0, .2, 1), height .5s cubic-bezier(.3, 0, .2, 1), left .5s cubic-bezier(.3, 0, .2, 1), top .5s cubic-bezier(.3, 0, .2, 1); }
+.lens.native { opacity: 0 !important; }
+.lens.move.solid { mix-blend-mode: normal; }   /* the move cursor keeps its own colours so it reads over any drawing */
+.cpick button { background: #8a8a85; }
+.cpick button[aria-pressed="true"] { outline: 1px solid var(--ink); outline-offset: 2px; }
+.stage.lensing.curhand, .stage.lensing.curhand .sslot, .stage.lensing.curhand .sslot * { cursor: grab !important; }
+.stage.lensing.curhand.dragging, .stage.lensing.curhand.dragging .sslot, .stage.lensing.curhand.dragging .sslot * { cursor: grabbing !important; }
+/* cursor options, to compare (temporary) */
+.cpick { position: absolute; left: 50%; bottom: 14px; translate: -50% 0; z-index: 31; display: flex; align-items: center; gap: 4px; font: 300 12px/1 var(--jost); color: var(--muted); }
+.cpick > span { margin-right: 8px; white-space: nowrap; }
+.cpick button { width: 34px; height: 34px; padding: 0; border: 1px solid transparent; background: none; color: var(--ink); cursor: pointer; display: grid; place-items: center; position: relative; }
+.cpick button svg { width: 30px; height: 30px; overflow: visible; }
+.cpick button em { position: absolute; top: -13px; left: 0; right: 0; font: 300 10px/1 var(--jost); font-style: normal; color: var(--muted); }
+.cpick button[aria-pressed="true"] { border-color: rgba(43, 43, 40, .45); }
+@media (max-width: 900px) { .cpick { bottom: 70px; } .cpick > span { display: none; } }   /* narrower windows: the options sit just above the caption */
+@media (hover: none) { .cpick { display: none; } }
+.lens.grab b { transform: scale(.84); }
+.lens.max i::before, .lens.max i::after { opacity: 0; }
+.stage { touch-action: none; }
+.lensnote { position: fixed; left: 0; top: 0; z-index: 41; pointer-events: none; font: 300 12px/16px var(--jost); color: var(--ink, #2b2b28); background: rgba(235, 235, 235, .92); padding: 5px 9px 6px; white-space: nowrap; opacity: 0; transition: opacity .5s ease; }
+.lensnote.say { opacity: 1; }
+/* the work's details fade in on the wall below the work when you hover; never over the drawing */
+#site.one .grid > .big { container-type: inline-size; }
+#site.one .big .cap { display: grid; gap: 1px; position: absolute; left: 14px; right: auto; top: auto; bottom: 11px; width: auto; padding: 0; background: none; box-shadow: none; transform: none; font-size: 12px; line-height: 1.45; color: var(--ink); opacity: 0; transition: opacity .6s ease; z-index: 2; pointer-events: none; }
+#site.one .big .cap .l2 { color: var(--muted); }
+#site.one .big:hover .cap, #site.one .big:focus-visible .cap { opacity: 1; transition: opacity .7s ease .1s; }
+@container (max-width: 600px) { #site.one .big .cap .md { display: none; } }
+@container (max-width: 470px) { #site.one .big .cap .l2 { display: none; } }
+@media (hover: none), (max-width: 760px) { #site.one .big .cap { display: none; } }
+.stage { position: fixed; inset: 0; z-index: 25; background: var(--wall); overflow: hidden; }
+.stage .sslot { position: absolute; inset: 28px 28px 64px; display: flex; align-items: center; justify-content: center; }
+.stage .hold { flex: none; }
+.stage .scap { position: absolute; left: max(28px, env(safe-area-inset-left, 0px)); bottom: 22px; font-size: 14px; line-height: 1.35; }
+.stage .scap span { color: var(--muted); }
+.stage .shut { position: absolute; right: max(28px, env(safe-area-inset-right, 0px)); bottom: 22px; font: 300 14px/1.35 var(--jost); background: none; border: 0; padding: 0; cursor: pointer; color: inherit; }
+.stage .shut:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 5px; }
+#site.nohover .grid > .big { transform: none !important; box-shadow: none !important; }  /* landing back on the grid: nothing grows until the pointer moves */
+#site.nohover .big .cap { opacity: 0 !important; }
+.fx img { position: absolute; max-width: none; display: block; will-change: opacity; }
+#park { position: fixed; left: -9999px; top: 0; width: 600px; height: 600px; visibility: hidden; }
+.wt .more { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; margin-top: 10px; }
+.wt .more:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 5px; }
+
+/* information page: the statement and quote to read on the left, the record of the career on the right */
+.infopage { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); gap: 32px clamp(32px, 6vw, 120px); padding-block: 36px 120px; padding-left: max(var(--edge), env(safe-area-inset-left, 0px)); padding-right: max(var(--edge), env(safe-area-inset-right, 0px)); }
+.infopage .lead { display: grid; gap: 18px; max-width: 40rem; align-content: start; }
+.infopage h1 { font-weight: 200; font-size: clamp(32px, 3vw, 44px); line-height: 1.1; margin: 0; }
+.infopage .dt { color: var(--muted); font-size: 15px; margin-top: -8px; }
+.infopage .st { font-size: 18px; line-height: 1.65; margin-top: 18px; }
+.infopage blockquote { margin: 10px 0 0; padding: 0 0 0 22px; border-left: 1px solid #d6d6d2; display: grid; gap: 10px; }
+.infopage blockquote p { font-size: 16px; line-height: 1.7; color: #45453f; font-style: italic; }
+.infopage blockquote footer { font-size: 14px; color: var(--muted); }
+.infopage blockquote footer::before { content: "— "; }
+.infopage .facts { display: grid; gap: 30px; align-content: start; padding-top: 8px; }
+.infopage h2 { font-weight: 300; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
+.infopage ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 15px; line-height: 1.45; }
+.infopage ul a:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+@media (max-width: 860px) { .infopage { grid-template-columns: minmax(0, 1fr); padding-top: 12px; } }
+
+/* ---- Information on the wall (chosen) ---- */
+.ionwall { padding: 3px max(var(--edge), env(safe-area-inset-right, 0px)) var(--edge) max(var(--edge), env(safe-area-inset-left, 0px)); }
+.iwl { --fh: clamp(260px, 30vw, 430px); background: var(--wall) url("wall-floor.jpg") center bottom / 100% var(--fh) no-repeat; min-height: calc(100vh - 150px); box-sizing: border-box; padding: clamp(48px, 8vw, 140px) 9% calc(var(--fh) * .163 + clamp(48px, 7vw, 110px)); }
+.iwt { max-width: 28rem; display: grid; gap: 18px; font-size: 13px; line-height: 1.75; font-weight: 300; color: var(--ink); }
+.iwt .dt { color: var(--muted); }
+.iwt a.ul { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; text-decoration-color: #b5b5b0; }
+.iwt a.ul:hover { text-decoration-color: currentColor; }
+.cform { display: grid; gap: 14px; margin-top: 18px; }
+.cform .ch { color: var(--muted); }
+.cform label { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr); align-items: baseline; gap: 12px; }
+.cform label span { color: var(--muted); }
+.cform input, .cform textarea { font: inherit; color: var(--ink); background: transparent; border: 0; border-bottom: 1px solid #c9c9c5; padding: 4px 0 6px; border-radius: 0; outline: none; resize: vertical; transition: border-color .3s; }
+.cform input:focus, .cform textarea:focus { border-bottom-color: var(--ink); }
+.cform .bad { border-bottom-color: #a0574a; }
+.cform .crow { display: flex; gap: 18px; align-items: baseline; padding-left: calc(5.5rem + 12px); }
+.cform button { font: inherit; color: var(--ink); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+.cform .cnote { color: var(--muted); }
+@media (max-width: 520px) { .cform label { grid-template-columns: minmax(0, 1fr); gap: 2px; } .cform .crow { padding-left: 0; } }
+.iwt .ct a:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+@media (max-width: 760px) { .iwl { padding: 32px 22px calc(var(--fh) * .163 + 40px); } .iwt { font-size: 13px; } }
+#site.xfade, #site main.xfade { transition: opacity 1.8s cubic-bezier(.4, 0, .2, 1); }
+#site.ghost .top { visibility: hidden; }  /* the header stays still: only the real one shows */
+/* ---- (unused) Information versions that were compared ---- */
+.ipick { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: baseline; font-size: 12px; color: var(--muted); margin: 6px max(var(--edge), env(safe-area-inset-right, 0px)) 0 max(var(--edge), env(safe-area-inset-left, 0px)); padding: 8px 0; border-top: 1px solid #ebebe8; }
+.ipick button { background: none; border: 0; padding: 0; font: 300 13px/1 var(--jost); color: var(--ink); cursor: pointer; }
+.ipick button[aria-pressed="true"] { text-decoration: underline; text-underline-offset: 5px; text-decoration-thickness: 1px; }
+.ipad { padding-left: max(var(--edge), env(safe-area-inset-left, 0px)); padding-right: max(var(--edge), env(safe-area-inset-right, 0px)); }
+.ifacts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 28px clamp(24px, 3vw, 56px); }
+.ifacts h2 { font-weight: 300; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
+.ifacts ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 14px; line-height: 1.45; }
+@media (max-width: 860px) { .ifacts { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+@media (max-width: 520px) { .ifacts { grid-template-columns: minmax(0, 1fr); } }
+
+/* 1. wall text: Information opens as a wall, the statement set large like vinyl lettering */
+.iwall { padding-block: 0 var(--edge); }
+.iwall .wallx { background: var(--wall); margin: 3px max(var(--edge), env(safe-area-inset-right, 0px)) 0 max(var(--edge), env(safe-area-inset-left, 0px)); min-height: calc(100vh - 150px); box-sizing: border-box; padding: clamp(40px, 9vw, 150px) clamp(24px, 9vw, 160px) clamp(40px, 6vw, 90px); display: grid; gap: clamp(36px, 5vw, 72px); align-content: start; }
+.iwall .wst { font-weight: 200; font-size: clamp(24px, 2.9vw, 46px); line-height: 1.28; letter-spacing: -.005em; max-width: 24em; margin: 0; }
+.iwall .wby { font-size: 14px; color: var(--muted); margin-top: -18px; }
+.iwall .wq { font-weight: 200; font-style: italic; font-size: clamp(17px, 1.45vw, 22px); line-height: 1.6; max-width: 34em; margin-left: auto; color: #45453f; }
+.iwall .wq footer { font-style: normal; font-size: 14px; color: var(--muted); margin-top: 12px; }
+.iwall .wq footer::before { content: "— "; }
+.iwall .ifacts { border-top: 1px solid #d9d9d6; padding-top: 26px; }
+@media (prefers-reduced-motion: no-preference) {
+  .iwall .wallx { animation: wallin 1.2s cubic-bezier(.65, 0, .3, 1) both; }
+  .iwall .wallx > * { animation: wallfade 1s ease .9s both; }
+  .iwall .wallx > .wq { animation-delay: 1.3s; } .iwall .wallx > .ifacts { animation-delay: 1.6s; }
+}
+@keyframes wallin { from { clip-path: inset(0 0 calc(100% - 2px) 62%); } to { clip-path: inset(0 0 0 0); } }
+@keyframes wallfade { from { opacity: 0; } to { opacity: 1; } }
+
+/* 2. career as a distance line */
+.iline { padding-block: 40px 120px; display: grid; gap: 64px; }
+.iline .ltop { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); gap: 32px clamp(32px, 6vw, 120px); }
+.iline .ltop h1 { font-weight: 200; font-size: clamp(32px, 3vw, 44px); line-height: 1.1; margin: 0; }
+.iline .ltop .dt { color: var(--muted); font-size: 15px; margin-top: 6px; }
+.iline .ltop .st { font-size: 18px; line-height: 1.65; }
+.iline .ltop blockquote { margin: 0; font-style: italic; font-size: 15px; line-height: 1.7; color: #45453f; }
+.iline .ltop blockquote footer { font-style: normal; font-size: 13px; color: var(--muted); margin-top: 8px; }
+.iline .ltop blockquote footer::before { content: "— "; }
+.track2 { position: relative; height: 230px; margin: 0 8px; }
+.track2::before { content: ""; position: absolute; left: 0; right: 0; top: 120px; height: 1px; background: var(--ink); opacity: .55; }
+.track2 .end { position: absolute; top: 132px; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.track2 .end.r { right: 0; } .track2 .end.l { left: 0; }
+.track2 .dot { position: absolute; top: 120px; left: var(--x); width: 26px; height: 26px; margin: -13px 0 0 -13px; background: none; border: 0; padding: 0; cursor: pointer; }
+.track2 .dot::before { content: ""; position: absolute; left: 50%; top: 50%; width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; border-radius: 50%; background: var(--ink); transition: transform .4s ease; }
+.track2 .dot.aw::before { background: var(--page); border: 1px solid var(--ink); box-sizing: border-box; }
+.track2 .dot.ed::before { border-radius: 0; }
+.track2 .dot .lab { position: absolute; left: 50%; bottom: 30px; transform: translateX(-50%); white-space: nowrap; font: 300 14px/1.35 var(--jost); color: var(--ink); opacity: 0; transition: opacity .35s ease; pointer-events: none; text-align: center; }
+.track2 .dot .lab small { display: block; font-size: 12px; color: var(--muted); }
+.track2 .dot:first-of-type .lab { left: 0; transform: none; text-align: left; }
+.track2 .dot.lastish .lab { left: auto; right: 0; transform: none; text-align: right; }
+.track2 .dot.on .lab, .track2 .dot:hover .lab, .track2 .dot:focus-visible .lab { opacity: 1; }
+.track2 .dot.on::before, .track2 .dot:hover::before { transform: scale(1.6); }
+.track2 .stick { position: absolute; left: var(--x); top: 120px; width: 1px; height: 0; background: var(--ink); opacity: .55; transition: height .35s ease, top .35s ease; }
+.track2 .dot.on + .stick, .track2 .dot:hover + .stick { top: 92px; height: 28px; }
+.ilegend { display: flex; flex-wrap: wrap; gap: 8px 26px; font-size: 13px; color: var(--muted); }
+.ilegend i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--ink); margin-right: 8px; vertical-align: 1px; }
+.ilegend i.aw { background: none; border: 1px solid var(--ink); box-sizing: border-box; } .ilegend i.ed { border-radius: 0; }
+.inote { font-size: 13px; color: var(--muted); }
+@media (max-width: 860px) {
+  .iline .ltop { grid-template-columns: minmax(0, 1fr); }
+  .track2 { height: auto; margin: 0; padding: 30px 0 30px 28px; display: grid; gap: 18px; }
+  .track2::before { left: 6px; right: auto; top: 0; bottom: 0; width: 1px; height: auto; }
+  .track2 .end { position: static; } .track2 .end.r { order: 99; }
+  .track2 .dot { position: relative; left: auto; top: auto; margin: 0; width: auto; height: auto; text-align: left; }
+  .track2 .dot::before { left: -22px; top: 10px; }
+  .track2 .dot .lab, .track2 .dot:first-of-type .lab, .track2 .dot.lastish .lab { position: static; opacity: 1; transform: none; white-space: normal; text-align: left; }
+  .track2 .stick { display: none; }
+}
+
+/* 3. the statement and quote as boxes among the works */
+.grid.works > .tx { background: var(--wall); display: flex; flex-direction: column; justify-content: center; padding: clamp(24px, 5vw, 80px); box-sizing: border-box; overflow: hidden; }
+.tx .k { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 18px; }
+.tx.big1 p { font-weight: 200; font-size: clamp(18px, 2.05vw, 34px); line-height: 1.32; }
+.tx.q p { font-weight: 200; font-style: italic; font-size: clamp(15px, 1.35vw, 22px); line-height: 1.55; color: #45453f; }
+.tx.q footer { font-size: 13px; color: var(--muted); margin-top: 14px; } .tx.q footer::before { content: "— "; }
+.tx.nm h1 { font-weight: 200; font-size: clamp(30px, 3.4vw, 56px); line-height: 1.05; margin: 0; } .tx.nm .dt { color: var(--muted); font-size: 15px; margin-top: 10px; }
+.grid.works > .tx.fx2 { justify-content: center; }
+.tx.fx2 .ifacts { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px 28px; } .tx.fx2 .ifacts ul { font-size: 13px; }
+@media (max-width: 760px) { .grid.works > .tx { grid-column: 1 / -1; grid-row: auto; padding: 28px 22px; } }
+
+/* 4. the quote unfolds a phrase at a time as you scroll */
+.iunf { padding-block: 0 120px; }
+.iunf .ufirst { min-height: calc(100vh - 170px); display: grid; align-content: end; padding-bottom: 12vh; }
+.iunf .ufirst p { font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.iunf .ph2 { min-height: 62vh; display: grid; align-items: center; }
+.iunf .ph2 span { display: block; font-weight: 200; font-size: clamp(26px, 3.6vw, 58px); line-height: 1.2; max-width: 19em; color: var(--ink); opacity: .08; transform: translateY(18px); transition: opacity 1.4s ease, transform 1.4s cubic-bezier(.2, 0, .1, 1), color 1.4s ease; }
+.iunf .ph2.on span { opacity: 1; transform: none; }
+.iunf .ph2.past span { opacity: 1; color: #b8b8b3; transform: none; }
+.iunf .ph2:nth-child(odd) span { margin-left: auto; text-align: right; }
+.iunf .usign { font-size: 15px; color: var(--muted); padding: 2vh 0 16vh; text-align: right; }
+.iunf .usign::before { content: "— "; }
+.iunf .urest { display: grid; gap: 56px; border-top: 1px solid #ebebe8; padding-top: 48px; }
+.iunf .urest .st { font-size: 18px; line-height: 1.65; max-width: 40rem; }
+.iunf .urest h1 { font-weight: 200; font-size: clamp(28px, 2.6vw, 40px); margin: 0; } .iunf .urest .dt { color: var(--muted); font-size: 15px; margin-top: 4px; }
+@media (prefers-reduced-motion: reduce) { .iunf .ph2 span { opacity: 1; transform: none; transition: none; } }
+/* rows of three, two and one: square boxes on a 6-column grid, the same thin gap everywhere */
+.grid.works.mixed { --cols: 6; grid-auto-rows: auto; }
+.grid.works.mixed > .big { grid-column: span var(--span, 3); grid-row: span var(--rspan, 1); aspect-ratio: 1 / 1; }
+.grid.works.mixed > .big.lg { aspect-ratio: auto; }   /* a large work beside two smaller ones: two rows tall, so still square (Adam's reference) */
+@media (max-width: 760px) { .grid.works.mixed { --cols: 1; } .grid.works.mixed > .big { grid-column: auto; grid-row: auto; } .grid.works.mixed > .big.lg { aspect-ratio: 1 / 1; } }
+</style>
+
+<div id="site"></div>
+
+<div id="park">
+  <div class="hold" id="hold">
+    <img id="art" src="wall-1000.jpg" alt="" draggable="false">
+    <div class="walk" id="walk"></div>
+  </div>
+</div>
+<button type="button" class="stepback" id="stepBack" hidden>Step back</button>
+<div class="lens" id="lens" aria-hidden="true"><i></i><b id="lensb"></b></div><div class="lensnote" id="lensnote" aria-hidden="true">Drag to move around the work</div>
+<div class="stage" id="stage" hidden><div class="sslot" id="sslot"></div><div class="sbar"></div><p class="scap" id="scap"></p><div class="zoomer" role="group" aria-label="Zoom">
+  <span class="v-buttons"><button type="button" class="zb" id="zout" aria-label="Zoom out">−</button><span class="zl">Zoom</span><button type="button" class="zb" id="zin" aria-label="Zoom in">+</button></span>
+  <span class="v-words"><button type="button" class="zw" id="zfar">Step back</button><span class="zdot"></span><button type="button" class="zw" id="znear">Step closer</button></span>
+  <span class="v-line"><span class="zt">Far</span><span class="track" data-axis="x"><span class="fillr"></span><span class="knob"></span></span><span class="zt">Near</span></span>
+  <span class="v-ruler"><span class="track ruler" data-axis="x"><span class="ticks"></span><span class="knob"></span><span class="read zdist"></span></span></span>
+  <span class="v-steps"><span class="zt">Far</span><span class="steps"><button type="button" data-z="0" aria-label="Stand back"></button><button type="button" data-z=".25" aria-label="Closer"></button><button type="button" data-z=".5" aria-label="Closer"></button><button type="button" data-z=".75" aria-label="Closer"></button><button type="button" data-z="1" aria-label="As close as you can"></button></span><span class="zt">Near</span></span>
+</div>
+<div class="v-edge" aria-label="Distance"><span class="track edge" data-axis="y"><span class="knob"></span></span><span class="zt">Near</span><span class="zt far">Far</span></div>
+<div class="v-hair"><span class="track hair" data-axis="x"><span class="fillr"></span><span class="knob"></span><span class="read zdist"></span></span></div>
+<button type="button" class="shut" id="shut">Close</button></div>
+<div id="scale" hidden></div>
+<div class="fx" id="fx" hidden><img id="fa" alt="" hidden><img id="fb" alt="" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/openseadragon.min.js"></script>
+<script>
+(() => {
+  /* ---------- content (placeholders until Adam sends real titles and captions) ---------- */
+  const WORKS = [
+    { tile: '1 / 1 / 9 / 9', dzi: 'wall.dzi', img: 'wall-3000.jpg', thumb: 'wall-1000.jpg', title: 'Untitled', year: '2021', medium: 'Ink, graphite on paper, hand cut, layered', size: '36.5 × 34 in',
+      alt: 'The first drawing in a white frame on a pale wall: dense layered grey and ochre strips crossing in long curves' },
+    { tile: '10 / 6 / 16 / 13', dzi: 'wall2.dzi', img: 'wall2-3000.jpg', thumb: 'wall2-1000.jpg', title: 'Untitled', year: '2022', medium: 'Ink, graphite on paper, hand cut, layered', size: '36.5 × 34 in',
+      alt: 'The second drawing in the same white frame on the same wall' },
+    { tile: '15 / 1 / 21 / 6', dzi: 'wall3c.dzi', img: 'wall3b-3000.jpg', thumb: 'wall3b-1000.jpg', title: 'Untitled', year: '2021', medium: 'Ink, graphite on paper, hand cut, layered', size: '36.5 × 34 in',
+      alt: 'The third drawing in the same white frame: long looping lines in blue, ochre and red, cooler at the top and warmer to the right' },
+    // taller work (45 x 32 in): photo padded to a square with wall colour; zoom stops at half the photo's resolution (the photo is softer up close)
+    { tile: '16 / 6 / 25 / 13', dzi: 'wall4t.dzi', img: 'wall4-3000.jpg', thumb: 'wall4-1000.jpg', scan: 9221, zoom: 0.35, title: 'Untitled', year: '2023', medium: 'Graphite on paper, hand cut, layered', size: '45 × 32 in',
+      wide: true, crop: [1619, 601, 5970, 8470], frame: [0.19, 0.07, 0.73, 0.93],
+      alt: 'A tall drawing in a white frame: dense grey graphite strands sweeping in an arc, with warm paper showing through the gaps' },
+    // four small works (14 x 11 in): photos padded to a square at true scale beside the others (70 px per inch against 157)
+    { tile: '1 / 9 / 5 / 13', fill: 140, frame: [0.31, 0.23, 0.37, 0.48], dzi: 'wall5.dzi', img: 'wall5-3000.jpg', thumb: 'wall5-1000.jpg', scan: 3344, ppi: 70, crop: [920, 778, 1385, 1850], title: 'Untitled', year: '2012', medium: 'Graphite on paper, hand cut, layered', size: '14 × 11 in',
+      alt: 'A small drawing in a white frame with a wide white mat: a dense mesh of fine grey graphite lines crossing in every direction' },
+    { tile: '6 / 9 / 10 / 13', fill: 140, frame: [0.31, 0.23, 0.37, 0.48], dzi: 'wall6.dzi', img: 'wall6-3000.jpg', thumb: 'wall6-1000.jpg', scan: 3344, ppi: 70, crop: [920, 778, 1385, 1850], title: 'Untitled', year: '2012', medium: 'Graphite on paper, hand cut, layered', size: '14 × 11 in',
+      alt: 'A small drawing in the same white frame and mat: a fine, even web of grey and black lines, darker along the bottom edge' },
+    { tile: '9 / 1 / 14 / 6', fill: 140, frame: [0.31, 0.23, 0.37, 0.48], dzi: 'wall7.dzi', img: 'wall7-3000.jpg', thumb: 'wall7-1000.jpg', scan: 3344, ppi: 70, crop: [920, 778, 1385, 1850], title: 'Untitled', year: '2012', medium: 'Graphite on paper, hand cut, layered', size: '14 × 11 in',
+      alt: 'A small drawing in the same white frame and mat: large loose loops of dark graphite overlapping across the sheet' },
+    { tile: '21 / 1 / 25 / 6', fill: 140, frame: [0.31, 0.23, 0.37, 0.48], dzi: 'wall8.dzi', img: 'wall8-3000.jpg', thumb: 'wall8-1000.jpg', scan: 3344, ppi: 70, crop: [920, 778, 1385, 1850], title: 'Untitled', year: '2012', medium: 'Graphite on paper, hand cut, layered', size: '14 × 11 in',
+      alt: 'A small drawing in the same white frame and mat: soft grey vertical loops, lighter near the edges' },
+    // unframed 22 x 23.5 in work from a 600 ppi scan: with a half-inch white paper border, hung on the wall with a soft shadow; deep zoom to the scan's full resolution,
+    // detail tiles (4092 px) are fetched only around where you are looking (deep: true)
+    { deep: true, white: true, fill: 104, dzi: 'wall9y.dzi', img: 'wall9y-3000.jpg', thumb: 'wall9y-1000.jpg', scan: 17200, ppi: 600, crop: [1496, 1914, 14208, 13372], frame: [0.087, 0.1113, 0.826, 0.7774], title: 'Untitled', year: '2020', medium: 'Ink, graphite on paper, hand cut, layered', size: '22 × 23.5 in',
+      alt: 'An unframed cut-paper drawing: a dense tangle of thin looping strands, blue-grey at left, ochre at top and deep red at lower right' },
+    // companion unframed drawing ("fowlerdrawing d", 128 ppi scan, assumed the same 22 x 23.5 in): same border and hanging as work 9; zoom is shallower because the file is smaller
+    { white: true, fill: 104, dzi: 'wall10y.dzi', img: 'wall10y-3000.jpg', thumb: 'wall10y-1000.jpg', scan: 7153, ppi: 250, crop: [626, 810, 5900, 5532], frame: [0.0875, 0.1132, 0.8248, 0.7734], title: 'Untitled', year: '2021', medium: 'Ink, graphite on paper, hand cut, layered', size: '22 × 23.5 in',
+      alt: 'An unframed cut-paper drawing with a white border: dense looping strands, ochre and rust at upper left giving way to blue-green across the rest' },
+    // unframed 19.5 x 13 in drawing ("19.5x13b copy.jpg", 300 ppi scan, portrait): same half-inch white border and hanging as works 9 and 10
+    { white: true, fill: 121, dzi: 'wall11y.dzi', img: 'wall11y-3000.jpg', thumb: 'wall11y-1000.jpg', scan: 8600, ppi: 300, crop: [2324, 1362, 3952, 5876], frame: [0.2702, 0.1584, 0.4595, 0.6833], title: 'Untitled', year: '2016', medium: 'Graphite on paper, hand cut, layered', size: '19.5 × 13 in',
+      alt: 'A tall unframed cut-paper drawing with a white border: fine grey and black strands sweeping diagonally up to the right in long arcs' },
+    // "88.4 copy.jpg" (Adam, 2026-11-10): framed grey work photographed on the same wall (7500 px square, wall #ebebeb); size and year not given yet
+    { dzi: 'wall12.dzi', img: 'wall12-3000.jpg', thumb: 'wall12-1000.jpg', frame: [0.068, 0.0827, 0.848, 0.836], title: 'Trilogy 1', year: '2010', medium: 'Graphite on paper, hand cut, layered', size: '36 × 38 in',
+      alt: 'A large square drawing in a white frame: a dense field of fine grey looping strands, with a soft dark fold running across the middle' },
+  ];
+  /* the long wall: every work hung at its true size, side by side with equal gaps, centres 57 in above the floor (as in a gallery) */
+  const WALL_AR = 2.4, FLOOR = 78;              // wall tile width / height; floor line in % of the tile's height
+  function hangWall() {
+    const GAP = 10, M = 7;                       // inches between works; % margin at each end
+    const d = WORKS.map(w => { const c = w.crop || [676, 600, 6150, 6750], ppi = w.ppi || 157, s = w.scan || 7500; return { c, s, wi: c[2] / ppi, hi: c[3] / ppi }; });
+    const u = (100 - 2 * M) / (d.reduce((a, x) => a + x.wi, 0) + GAP * (d.length - 1));   // % of the wall's width per inch
+    let x = M;
+    return d.map((g, k) => { const w = WORKS[k], left = x; x += (g.wi + GAP) * u;
+      const img = `width:${(100 * g.s / g.c[2]).toFixed(2)}%;height:${(100 * g.s / g.c[3]).toFixed(2)}%;left:${(-100 * g.c[0] / g.c[2]).toFixed(2)}%;top:${(-100 * g.c[1] / g.c[3]).toFixed(2)}%`;
+      return `<a href="#work-${k + 1}" style="left:${left.toFixed(2)}%;width:${(g.wi * u).toFixed(2)}%;top:${(FLOOR - 57 * u * WALL_AR).toFixed(2)}%;aspect-ratio:${g.c[2]} / ${g.c[3]}"><span class="crop"><img src="${w.thumb}" alt="${w.alt}" style="${img}"></span></a>`;
+    }).join('');
+  }
+  const ARTIST = { name: 'Adam Fowler', born: 'b 1979, Fairfax, Virginia' };
+  const STATEMENT = 'Fowler draws on multiple hand-coloured sheets of paper with a gestural line before painstakingly cutting away the negative spaces; the work is then constructed by layering the cut drawings one on top of another. These opposed actions speak to the materiality and physicality of highly refined processes and long stretches of time.';
+  const CV = 'Adam Fowler received his BFA from the Maryland Institute College of Art, Baltimore, in 2001. His work has been exhibited in galleries and institutions throughout the US, including the Museum of Arts and Design, New York; the Daum Museum of Contemporary Art, Sedalia, Missouri; the Weatherspoon Art Museum, Greensboro, North Carolina; The Contemporary Museum, Honolulu; the Currier Museum of Art, Manchester, New Hampshire; The Drawing Center, New York; and Darren Knight Gallery, Sydney. He has received a New York Foundation for the Arts Fellowship in Drawing, a Pollock-Krasner Foundation Grant and a Young Artist Program Grant from the DC Commission on the Arts and Humanities. His work is held in numerous private and corporate collections throughout the US.';
+  const QUOTE = 'In these new works I’m introducing color as compositional elements and thinking about optical mixing, that is to say how our eyes mix color together while seeing. I have always been interested in line, movement, and space, but while the introduction of color seems simple it has proven to change how I think about these ideas and put them into action in fundamental ways. This body represents some small scale, almost sketch-like approaches that act as exercises in how I consider material, while the larger pieces are fully formed works that pull from highly refined processes and long stretches of time.';
+  const FACTS = [
+    ['Education', ['BFA, Maryland Institute College of Art, Baltimore, 2001']],
+    ['Selected exhibitions', ['Museum of Arts and Design, New York', 'Daum Museum of Contemporary Art, Sedalia, Missouri', 'Weatherspoon Art Museum, Greensboro, North Carolina', 'The Contemporary Museum, Honolulu', 'Currier Museum of Art, Manchester, New Hampshire', 'The Drawing Center, New York', 'Darren Knight Gallery, Sydney']],
+    ['Awards', ['New York Foundation for the Arts Fellowship in Drawing', 'Pollock-Krasner Foundation Grant', 'Young Artist Program Grant, DC Commission on the Arts and Humanities']],
+    ['Collections', ['Numerous private and corporate collections throughout the US']],
+  ];
+  // a new arrangement every time the site is opened (Adam), always with one work the full width (Adam):
+  // blocks in a random order: one full-width work, three groups of a large work beside two smaller stacked ones (large on a random side), and a pair
+  const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const LARGE = [0, 1, 2, 3, 8, 9, 11];   // the 36.5 x 34 works, the 45 x 32, the two 22 x 23.5 unframed works, Trilogy 1: the ones given the full width or a large place
+  const lg = shuffle(LARGE.slice()).slice(0, 4), rest = shuffle([...Array(WORKS.length).keys()].filter(k => !lg.includes(k)));
+  const blocks = [[[lg[0], 6, 1]]];   // [work, columns of 6, rows]
+  for (let g = 1; g <= 3; g++) { const s1 = rest.pop(), s2 = rest.pop();
+    blocks.push(Math.random() < 0.5 ? [[lg[g], 4, 2], [s1, 2, 1], [s2, 2, 1]] : [[s1, 2, 1], [lg[g], 4, 2], [s2, 2, 1]]); }
+  while (rest.length >= 2) blocks.push([[rest.pop(), 3, 1], [rest.pop(), 3, 1]]);
+  if (rest.length) blocks.push([[rest.pop(), 6, 1]]);
+  const SHOW = [], SPAN = [], RSPAN = [];   // places on the page, top left to bottom right
+  shuffle(blocks).forEach(b => b.forEach(([k, c, r]) => { SHOW.push(k); SPAN.push(c); RSPAN.push(r); }));
+  const cap = w => `<p class="cap"><span class="l1"><i>${w.title}</i>, ${w.year}</span><span class="l2"><span class="md">${w.medium} · </span>${w.size}</span></p>`;
+  const header = v => `<header class="top chrome"><a href="#">Adam Fowler</a><nav aria-label="Site"><a href="#" ${v === 'home' || v === 'work' || v === 'one' ? 'aria-current="page"' : ''}>drawings</a><a href="#bio" ${v === 'about' ? 'aria-current="page"' : ''}>bio</a></nav></header>`;
+  const intro = (area) => `<div class="t wt" style="grid-area:${area}"><div class="fl"></div><div class="txt"><h1>${ARTIST.name}</h1><p class="dt">${ARTIST.born}</p><a class="more" href="#information">Information</a></div></div>`;
+  const info = () => `<main class="infopage">
+      <div class="lead"><h1>${ARTIST.name}</h1><p class="dt">${ARTIST.born}</p><p class="st">${STATEMENT}</p>
+        <blockquote><p>“${QUOTE}”</p><footer>${ARTIST.name}</footer></blockquote></div>
+      <div class="facts">${FACTS.map(([h, items]) => `<section><h2>${h}</h2><ul>${items.map(i => `<li>${i}</li>`).join('')}</ul></section>`).join('')}
+        <section><h2>Contact</h2><ul><li><a href="#">Email</a></li><li><a href="#">Instagram</a></li></ul></section></div>
+    </main>`;
+
+
+  const IV = [['now', 'As it is'], ['wall', 'Wall text'], ['line', 'Distance line'], ['grid', 'Among the works'], ['unfold', 'One phrase at a time']];
+  const getIv = () => { try { const v = localStorage.getItem('iv'); if (IV.some(x => x[0] === v)) return v; } catch (e) {} return 'wall'; };
+  const ipick = v => `<div class="ipick" id="ipick"><span>Information, to compare:</span>${IV.map(([k, n]) => `<button type="button" data-iv="${k}" aria-pressed="${k === v}">${n}</button>`).join('')}</div>`;
+  const factsHtml = () => `<div class="ifacts">${FACTS.map(([h, items]) => `<section><h2>${h}</h2><ul>${items.map(i => `<li>${i}</li>`).join('')}</ul></section>`).join('')}</div>`;
+  const contact = `<p class="inote"><a href="#">Email</a> &nbsp;·&nbsp; <a href="#">Instagram</a></p>`;
+  const infoWall = () => `<main class="iwall"><div class="wallx">
+      <p class="wst">${STATEMENT}</p>
+      <blockquote class="wq"><p>“${QUOTE}”</p><footer>${ARTIST.name}</footer></blockquote>
+      <div>${factsHtml()}<p class="inote" style="margin-top:28px">${ARTIST.name}, ${ARTIST.born} &nbsp;·&nbsp; <a href="#">Email</a> &nbsp;·&nbsp; <a href="#">Instagram</a></p></div>
+    </div></main>`;
+  // the record laid on one hairline, 2001 to now. Only the BFA has a year; the rest are spaced evenly in listed order until Adam gives dates.
+  const infoLine = () => {
+    const ev = [['ed', FACTS[0][1][0].replace(', 2001', ''), 'Education, 2001'], ...FACTS[1][1].map(x => ['ex', x, 'Exhibition']), ...FACTS[2][1].map(x => ['aw', x, 'Award'])];
+    const n = ev.length;
+    const dots = ev.map(([c, t, sub], i) => { const x = i === 0 ? 0 : 6 + (i - 1) * (90 / (n - 2)); return `<button type="button" class="dot ${c}${x > 80 ? ' lastish' : ''}" style="--x:${x.toFixed(2)}%"><span class="lab">${t}<small>${sub}</small></span></button><span class="stick" style="--x:${x.toFixed(2)}%"></span>`; }).join('');
+    return `<main class="iline ipad">
+      <div class="ltop"><div><h1>${ARTIST.name}</h1><p class="dt">${ARTIST.born}</p></div><div></div>
+        <p class="st">${STATEMENT}</p><blockquote><p>“${QUOTE}”</p><footer>${ARTIST.name}</footer></blockquote></div>
+      <div><div class="track2"><span class="end l">2001</span>${dots}<span class="end r">Now</span></div>
+        <div class="ilegend"><span><i class="ed"></i>Education</span><span><i></i>Exhibitions</span><span><i class="aw"></i>Awards</span><span>Collections: ${FACTS[3][1][0]}</span></div>
+        <p class="inote" style="margin-top:14px">Placeholder spacing: the dots are in listed order until each exhibition and award has its year.</p></div>
+      ${contact}
+    </main>`;
+  };
+  const infoGrid = () => {
+    const tile = (w, k) => `<a class="t big${w.wide ? ' wide' : ''}" href="#work-${k + 1}"><span class="pic"><img class="ph" src="${w.img}" loading="lazy" decoding="async" alt="${w.alt}"${w.fill ? ` style="width:${w.fill}%;height:${w.fill}%;top:${w.white ? 47.5 : 50.2}%"` : ''}></span><span class="enl" aria-hidden="true"><i></i>Enlarge</span></a>`;
+    const T = WORKS.map(tile);
+    const nm = `<div class="t tx nm"><h1>${ARTIST.name}</h1><p class="dt">${ARTIST.born}</p></div>`;
+    const st = `<div class="t tx big1"><p>${STATEMENT}</p></div>`;
+    const q = `<div class="t tx q"><blockquote style="margin:0"><p>“${QUOTE}”</p><footer>${ARTIST.name}</footer></blockquote></div>`;
+    const fx = `<div class="t tx fx2">${factsHtml()}<div style="margin-top:26px">${contact}</div></div>`;
+    return `<main><div class="grid works">${nm}${T[0]}${T[1]}${st}${T[2]}${T[3]}${q}${T.slice(4).join('')}${fx}</div></main>`;
+  };
+  const infoUnfold = () => {
+    const parts = QUOTE.split(/(?<=[,.;])\s+/);
+    return `<main class="iunf ipad"><div class="ufirst"><p>${ARTIST.name}, on the new work &nbsp;↓</p></div>
+      ${parts.map(t => `<div class="ph2"><span>${t}</span></div>`).join('')}
+      <p class="usign">${ARTIST.name}</p>
+      <div class="urest"><div><h1>${ARTIST.name}</h1><p class="dt">${ARTIST.born}</p></div><p class="st">${STATEMENT}</p>${factsHtml()}${contact}</div>
+    </main>`;
+  };
+  // Adam's choice (2026-11-10): Information hangs on a piece of wall with the floor, every line the same size, no name (it is in the header)
+  const infoOnWall = () => `<main class="ionwall"><div class="iwl"><div class="iwt">
+      <p class="dt">${ARTIST.born}</p>
+      <p>${STATEMENT}</p>
+      <p>“${QUOTE}” — ${ARTIST.name}</p>
+      <p>${CV}</p>
+      <p>${ARTIST.name} is represented by <a class="ul" href="https://soniadutton.com" target="_blank" rel="noopener">Dutton</a>.</p>
+      <form class="cform" id="cform" name="contact" method="POST" data-netlify="true" netlify-honeypot="bot-field" novalidate>
+        <input type="hidden" name="form-name" value="contact"><p hidden><input name="bot-field"></p>
+        <p class="ch">Contact</p>
+        <label><span>Name</span><input name="name" autocomplete="name" required></label>
+        <label><span>Email</span><input name="email" type="email" autocomplete="email" required></label>
+        <label><span>Message</span><textarea name="message" rows="4" required></textarea></label>
+        <div class="crow"><button type="submit">Send</button><span class="cnote" aria-live="polite"></span></div>
+      </form>
+    </div></div></main>`;
+  // the contact form: checks the fields and thanks the sender. Not yet connected to an inbox (the live site needs a form service).
+  function wireContact() {
+    const f = site.querySelector('#cform'); if (!f) return;
+    f.addEventListener('submit', e => {
+      e.preventDefault();
+      const els = [...f.querySelectorAll('label input, label textarea')]; let ok = true;
+      els.forEach(el => { const bad = !el.value.trim() || (el.type === 'email' && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(el.value.trim())); el.classList.toggle('bad', bad); if (bad) ok = false; });
+      const note = f.querySelector('.cnote');
+      if (!ok) { note.textContent = 'Please fill in each line.'; return; }
+      note.textContent = 'Sending…';
+      fetch('/', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(new FormData(f)).toString() })
+        .then(r => { if (!r.ok) throw 0; note.textContent = 'Thank you, your message has been sent.'; els.forEach(el => { if (el.type !== 'hidden' && el.name !== 'bot-field') el.value = ''; }); })
+        .catch(() => { note.textContent = 'Sorry, that did not send. Please try again.'; });
+    });
+  }
+  function wireInfo(v) {
+    site.querySelectorAll('#ipick button').forEach(b => b.addEventListener('click', () => { try { localStorage.setItem('iv', b.dataset.iv); } catch (e) {} render(); }));
+    if (v === 'line') { const d0 = site.querySelector('.track2 .dot'); if (d0) d0.classList.add('on'); }
+    if (v === 'line') site.querySelectorAll('.track2 .dot').forEach(d => d.addEventListener('click', () => { const was = d.classList.contains('on'); site.querySelectorAll('.track2 .dot.on').forEach(x => x.classList.remove('on')); if (!was) d.classList.add('on'); }));
+    if (v === 'unfold') {
+      const els = [...site.querySelectorAll('.ph2')];
+      const io = new IntersectionObserver(es => { es.forEach(e => { if (e.isIntersecting) { const i = els.indexOf(e.target); els.forEach((x, j) => { x.classList.toggle('on', j === i); x.classList.toggle('past', j < i); }); } }); }, { rootMargin: '-45% 0px -45% 0px' });
+      els.forEach(x => io.observe(x));
+    }
+  }
+
+  const DIRS = {
+    jost: {
+      home: () => `<main><div class="grid works mixed">
+          ${WORKS.map((w, k) => { const a = (w.tile || '').split('/').map(Number), cw = a[3] - a[1], o = a[1] === 1 ? 'left' : a[3] === 13 ? 'right' : 'center';
+            const g = Math.min(2.6, Math.max(1.2, 6.5 / cw)).toFixed(2);   // smaller boxes grow more, so every work opens to about half the page
+            return `<a class="t big${w.wide ? ' wide' : ''}${RSPAN[SHOW.indexOf(k)] > 1 ? ' lg' : ''}" href="#work-${k + 1}" style="--o:${k % 2 ? 'right' : 'left'};--g:1.3;order:${SHOW.indexOf(k)};--span:${SPAN[SHOW.indexOf(k)]};--rspan:${RSPAN[SHOW.indexOf(k)]}${w.white ? ';--wall:#fff' : ''}"><span class="pic"><img class="ph" src="${w.img}" loading="lazy" decoding="async" alt="${w.alt}"${w.fill ? ` style="width:${w.fill}%;height:${w.fill}%;top:${w.white ? 47.5 : 50.2}%"` : ''}></span>${cap(w)}<span class="enl" aria-hidden="true"><i></i>Enlarge</span></a>`; }).join('')}
+          </div>
+        </main>`,
+      work: (k) => `<main class="vw">
+          <div class="panel"><div class="slot" id="slot"></div></div>
+          <div class="info chrome">
+            <div class="words"><p class="t1">${WORKS[k].title}</p><p class="m">${WORKS[k].year}</p><p class="m">${WORKS[k].medium}</p><p class="m">${WORKS[k].size}</p>
+            <p class="pager"><a href="#" data-go="-1">Previous</a><span class="c">${k + 1} / ${WORKS.length}</span><a href="#" data-go="1">Next</a></p>
+            <p class="hint" data-hint="Rest on the work to move closer|Touch and hold the work to move closer"></p></div>
+            <a class="all" href="#">All works</a>
+          </div>
+        </main>`,
+      about: info,
+      back: 'Step back',
+    },
+  };
+
+  /* ---------- routing: #work-1, #work-2, #about, or the wall of works ---------- */
+  const site = document.getElementById('site'), park = document.getElementById('park');
+  const hold = document.getElementById('hold'), walkEl = document.getElementById('walk'), art = document.getElementById('art');
+  const backBtn = document.getElementById('stepBack'), scaleEl = document.getElementById('scale');
+  const touch = matchMedia('(hover: none)').matches;
+  let route = { d: 'jost', v: 'home', k: 0 }, slotRO = null, chrome = [];
+
+  function parse() {
+    const h = (location.hash || '').replace('#', '');
+    if (h === 'bio' || h === 'about' || h === 'information') return { d: 'jost', v: 'about', k: 0 };
+    // one page of works (Adam's choice): the grid is the works page; #work-N opens that work over it
+    const m = h.match(/^work-(\d+)$/);
+    if (m) return { d: 'jost', v: 'one', k: Math.min(WORKS.length, Math.max(1, +m[1])) - 1, open: true };
+    return { d: 'jost', v: 'one', k: 0 };
+  }
+  function render() {
+    const r = parse();
+    if (r.v === 'work' && route.v === 'work' && r.k === idx && site.querySelector('#slot')) { route = r; return; }
+    route = r;
+    reset();
+    const D = DIRS.jost;
+    site.classList.toggle('is-work', r.v === 'work');
+    const iv = getIv();
+    site.innerHTML = header(r.v) + (r.v === 'work' ? D.work(r.k) : r.v === 'about' ? infoOnWall() : D.home());
+    site.classList.toggle('one', r.v === 'one');
+    backBtn.textContent = D.back;
+    site.querySelectorAll('[data-hint]').forEach(el => { const [a, b] = el.dataset.hint.split('|'); el.textContent = touch ? b : a; });
+    site.querySelectorAll('[data-go]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); go(idx + +a.dataset.go); }));
+    chrome = [...site.querySelectorAll('.chrome')];
+    if (r.v === 'work') mount(r.k);
+    if (r.v === 'about') wireContact();
+    if (r.v === 'one') { wireOne(); if (r.open) requestAnimationFrame(() => { const a = site.querySelectorAll('a.big')[r.k]; if (a) { a.scrollIntoView({ block: 'center' }); requestAnimationFrame(() => openStage(a, r.k)); } }); }
+    window.scrollTo(0, 0);
+  }
+
+  // a work's box grows to the full height of the wall beside it (two rows and the gap), and swaps to the sharper photo
+  function wireGrow() {
+    const grid = site.querySelector('.grid'), box = site.querySelector('.grow');
+    const fit = () => { if (!box.isConnected) return; const h = box.offsetHeight, g = parseFloat(getComputedStyle(grid).rowGap) || 0; grid.style.setProperty('--grow', ((2 * h + g) / h).toFixed(4)); };
+    fit(); window.addEventListener('resize', fit);
+    site.querySelectorAll('.grow').forEach((a, k) => a.addEventListener('pointerenter', () => { const im = a.querySelector('img'); if (!im.dataset.big) { im.dataset.big = 1; im.src = WORKS[k].img; } }, { once: true }));
+  }
+
+  // the viewer lives in the page permanently and is moved onto the work's wall when a work is open
+  function mount(k) {
+    const slot = document.getElementById('slot');
+    slot.appendChild(hold);
+    const size = () => { const s = Math.floor(Math.min(slot.clientWidth, slot.clientHeight)); hold.style.width = hold.style.height = Math.max(120, s) + 'px'; run(); };
+    slotRO = new ResizeObserver(size); slotRO.observe(slot); size();
+    done(k, true);
+    warm(k);
+  }
+  function reset() {
+    if (slotRO) { slotRO.disconnect(); slotRO = null; }
+    inside = false; away = false; force = null;
+    st.close = st.mid = st.closeTgt = 0; st.x = st.px = st.fx = 0.5; st.y = st.py = st.fy = 0.5;
+    walkEl.classList.remove('open'); Object.assign(walkEl.style, { left: '', top: '', width: '', height: '', background: '' });
+    backBtn.hidden = true;
+    park.appendChild(hold);
+  }
+
+  /* ---------- walk closer (unchanged behaviour from the artwork page prototype) ---------- */
+  const SCAN_W = 7500, RATIO = 1;
+  const still = matchMedia('(prefers-reduced-motion: reduce)');
+  const osd = window.OpenSeadragon && OpenSeadragon({
+    element: walkEl, tileSources: WORKS.map(w => ({ tileSource: w.dzi, x: 0, y: 0, width: 1 })),
+    showNavigationControl: false, showNavigator: false,
+    mouseNavEnabled: false, visibilityRatio: 1, constrainDuringPan: false,
+    maxZoomPixelRatio: 3, minZoomImageRatio: 0.1, immediateRender: false, blendTime: 0.12, animationTime: 0,
+    placeholderFillStyle: 'transparent',
+  });
+  if (osd) {
+    osd.addOnceHandler('tile-drawn', () => hold.classList.add('ready'));
+    osd.world.addHandler('add-item', () => { if (osd.world.getItemCount() === WORKS.length) { WORKS.forEach((w, k) => findItem(k).setOpacity(k === idx ? 1 : 0)); run(); } });
+  }
+  let idx = 0, busy = false, force = null, drag = null, noClick = '';
+  function findItem(k) { for (let i = 0; i < osd.world.getItemCount(); i++) { const it = osd.world.getItemAt(i); if (it.source && it.source.tilesUrl && it.source.tilesUrl.indexOf(WORKS[k].dzi.replace('.dzi', '_files')) >= 0) return it; } return null; }
+  const pics = WORKS.map(w => { const im = new Image(); im.src = w.img; return im; });
+  const fx = document.getElementById('fx'), fa = document.getElementById('fa'), fb = document.getElementById('fb');
+  const frame = () => new Promise(r => requestAnimationFrame(r));
+  async function waitFor(cond) { while (!cond()) await frame(); }
+  async function anim(ms, fn) { const t0 = performance.now(); if (still.matches) ms = 1; for (;;) { const p = Math.min(1, (performance.now() - t0) / ms); fn(p); if (p >= 1) return; await frame(); } }
+  function place(el, r) { Object.assign(el.style, { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' }); }
+
+  // Empty wall (A, softened): the work is taken down, a moment of bare wall, then the next is hung
+  async function emptyWall(A, B, r) {
+    fa.src = A.src; fb.src = B.src; place(fa, r); place(fb, r);
+    fa.style.opacity = 1; fb.style.opacity = 0; fa.hidden = fb.hidden = false;
+    const soft = x => (1 - Math.cos(Math.PI * x)) / 2;
+    await anim(2600, p => { fa.style.opacity = 1 - soft(Math.min(1, p / 0.4)); fb.style.opacity = soft(Math.max(0, (p - 0.58) / 0.42)); });
+  }
+  async function go(to) {
+    to = (to + WORKS.length) % WORKS.length;
+    if (busy || to === idx || route.v !== 'work' || !osd || osd.world.getItemCount() !== WORKS.length) return;
+    busy = true;
+    away = true; leave();                          // step back first, then change
+    await waitFor(() => st.close <= 0.0005);
+    const r = hold.getBoundingClientRect();
+    await Promise.all(pics.map(im => im.decode ? im.decode().catch(() => {}) : null));
+    // words fade with the work
+    const words = site.querySelectorAll('.words');
+    fx.hidden = false; walkEl.style.visibility = 'hidden';
+    words.forEach(el => { el.style.transition = 'opacity 1s ease'; el.style.opacity = 0; });
+    const swapWords = setTimeout(() => { swapText(to); words.forEach(el => el.style.opacity = 1); }, 1500);
+    await emptyWall(pics[idx], pics[to], r);
+    clearTimeout(swapWords); swapText(to); words.forEach(el => { el.style.opacity = ''; el.style.transition = ''; });
+    done(to);
+    walkEl.style.visibility = ''; await frame(); await frame();
+    fx.hidden = true; fa.hidden = fb.hidden = true;
+    busy = false;
+  }
+  function swapText(k) {
+    // re-render only the caption block of the current direction, keep the viewer where it is
+    const tmp = document.createElement('div'); tmp.innerHTML = DIRS[route.d].work(k);
+    ['.words'].forEach(sel => {
+      const a = site.querySelector(sel), b = tmp.querySelector(sel); if (!a || !b || a.dataset.k == k) return;
+      a.innerHTML = b.innerHTML; a.dataset.k = k;
+      a.querySelectorAll('[data-hint]').forEach(el => { const [x, y] = el.dataset.hint.split('|'); el.textContent = touch ? y : x; });
+      a.querySelectorAll('[data-go]').forEach(el => el.addEventListener('click', e => { e.preventDefault(); go(idx + +el.dataset.go); }));
+    });
+  }
+  function done(k, fresh) {
+    idx = k;
+    if (osd && osd.world.getItemCount() === WORKS.length) WORKS.forEach((w, j) => findItem(j).setOpacity(j === idx ? 1 : 0));
+    art.src = WORKS[idx].img; art.alt = WORKS[idx].alt;
+    if (!fresh) { route.k = k; if (location.hash !== '#work-' + (k + 1)) location.hash = 'work-' + (k + 1); }
+    run();
+  }
+  document.addEventListener('keydown', e => {
+    if (route.v !== 'work') return;
+    if (e.key === 'ArrowRight') go(idx + 1);
+    if (e.key === 'ArrowLeft') go(idx - 1);
+  });
+
+  // close: 0 = standing back (whole work), 1 = nose to the work (one photo pixel per screen pixel)
+  const st = { close: 0, mid: 0, closeTgt: 0, x: 0.5, y: RATIO / 2, px: 0.5, py: RATIO / 2, fx: 0.5, fy: 0.5 };
+  // frame-rate independent easing: fraction of the remaining distance to cover this frame for a time constant tau (s)
+  const ease = (dt, tau) => 1 - Math.exp(-dt / tau);
+  let raf = 0, inside = false, away = false, lastT = performance.now(), tilesOn = false, quick = false;
+  const dpr = () => Math.min(2, window.devicePixelRatio || 1);
+  const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+
+  function tick(now) {
+    raf = 0;
+    if ((route.v !== 'work' && !stageOn) || !hold.isConnected || park.contains(hold)) return;
+    const dt = Math.min(0.05, (now - lastT) / 1000); lastT = now;
+    const calm = still.matches, hr = hold.getBoundingClientRect();
+    if (force !== null) st.closeTgt = force > st.closeTgt ? Math.min(force, st.closeTgt + dt / 1.6) : Math.max(force, st.closeTgt - dt / 1.6);
+    else if (inside) st.closeTgt = Math.min(1, st.closeTgt + dt / 2.8);      // resting on the work: drift closer
+    else st.closeTgt = Math.max(0, st.closeTgt - dt / 2.8);                  // off the work: drift back out at the same pace
+    { const w0 = WORKS[idx] || {}, mz = Math.max(1.5, (w0.scan || SCAN_W) * (w0.zoom || 1) / dpr() / hr.width);
+      st.closeTgt = Math.min(st.closeTgt, Math.max(zoomCap(idx, hr.width, mz), Math.min(st.closeTgt, st.close))); }   // wait for sharper tiles rather than show soft ones
+    // two gentle followers in a row: the approach gathers speed softly and settles softly, and turning back never jerks
+    const kc = calm ? 1 : ease(dt, quick ? 0.3 : 0.55);
+    st.mid += (st.closeTgt - st.mid) * kc; st.close += (st.mid - st.close) * kc;
+    if (Math.abs(st.closeTgt - st.close) < 0.0005 && Math.abs(st.closeTgt - st.mid) < 0.0005) st.close = st.mid = st.closeTgt;
+    const W = innerWidth, H = innerHeight, open = inside || st.close > 0.0005 || force !== null;
+    const box = open ? { x: 0, y: 0, w: W, h: H } : { x: hr.left, y: hr.top, w: hr.width, h: hr.height };
+    if (open) {
+      walkEl.classList.add('open');
+      Object.assign(walkEl.style, { left: '0px', top: '0px', width: W + 'px', height: H + 'px', background: `rgba(235, 235, 235, ${smooth(0, 0.12, st.close).toFixed(3)})` });
+    } else {
+      walkEl.classList.remove('open');
+      Object.assign(walkEl.style, { left: '', top: '', width: '', height: '', background: '' });
+    }
+    const chromeO = (1 - smooth(0.02, 0.25, st.close)).toFixed(3);
+    chrome.forEach(el => el.style.opacity = chromeO);
+    backBtn.hidden = st.close < 0.5 || stageOn || staging;
+    if (stageOn) lens.style.setProperty('--d', ((force || 0) > 0 ? 30 : 38) + 'px');
+    // hand over to the tiles only once they are all drawn at this size, so the switch can't be seen
+    if (st.close <= 0.0005) tilesOn = false;
+    else if (!tilesOn) { const it = osd && osd.world.getItemCount() === WORKS.length && findItem(idx); tilesOn = !!it && (!it.getFullyLoaded || it.getFullyLoaded()); }
+    hold.classList.toggle('tiles', tilesOn);
+    const W_ = WORKS[idx] || {}, maxZ = Math.max(1.5, (W_.scan || SCAN_W) * (W_.zoom || 1) / dpr() / hr.width);
+    const scale = Math.exp(Math.log(maxZ) * st.close) * hr.width;           // screen px per photo width
+    const ratio = SCAN_W / (scale * dpr());
+    
+    const ax = 0.5 - (hr.left + hr.width / 2 - (box.x + box.w / 2)) / scale;
+    const ay = RATIO / 2 - (hr.top + hr.height / 2 - (box.y + box.h / 2)) / scale;
+    // looking around follows the cursor more lazily the closer you are, so small hand movements don't jolt the magnified view
+    const kl = calm ? 1 : ease(dt, drag ? 0.06 : stageOn ? 0.18 : inside ? 0.28 + 0.55 * st.close : 0.9);
+    st.px += (st.fx - st.px) * kl; st.py += (st.fy * RATIO - st.py) * kl;
+    st.x += (st.px - st.x) * kl; st.y += (st.py - st.y) * kl;
+    const hw = 0.5 * box.w / scale, hh = 0.5 * box.h / scale;
+    st.scale = scale; st.hw = 0.5 * innerWidth / scale; st.hh = 0.5 * innerHeight / scale;
+    const tx = hw >= 0.5 ? 0.5 : Math.min(1 - hw, Math.max(hw, st.x));
+    const ty = hh >= RATIO / 2 ? RATIO / 2 : Math.min(RATIO - hh, Math.max(hh, st.y));
+    const w = smooth(0, 0.45, st.close);
+    const cx = ax + (tx - ax) * w, cy = ay + (ty - ay) * w;
+    if (osd && osd.world.getItemCount()) {
+      osd.viewport.zoomTo(scale / box.w, null, true);
+      osd.viewport.panTo(new OpenSeadragon.Point(cx, cy), true);
+    }
+    const settled = force === null && !inside && st.close === 0 && Math.abs(st.x - st.fx) < 1e-3 && Math.abs(st.y - st.fy * RATIO) < 1e-3 && Math.abs(st.px - st.fx) < 1e-3;
+    if (!settled) raf = requestAnimationFrame(tick);
+  }
+  function run() { if (!raf) { lastT = performance.now(); raf = requestAnimationFrame(tick); } }
+
+  function point(e) {
+    if ((route.v !== 'work' && !stageOn) || park.contains(hold)) return;
+    const r = hold.getBoundingClientRect();
+    let on = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+    if (stageOn) {   // opened from the one-page grid: "on the work" means on the frame, not the wall around it
+      const f = WORKS[idx].frame || [0.11, 0.09, 0.77, 0.86], m = 0.04;
+      on = on && e.clientX >= r.left + (f[0] - m) * r.width && e.clientX <= r.left + (f[0] + f[2] + m) * r.width && e.clientY >= r.top + (f[1] - m) * r.height && e.clientY <= r.top + (f[1] + f[3] + m) * r.height;
+      if (on) wasOn = true;
+    }
+    if (stageOn) {   // on the stage the view no longer follows the pointer: zooming starts at the centre of the work, then you drag to move around
+      const zoomed = (force || 0) > 0, ctl = e.target && e.target.closest && e.target.closest('button, .track, .v-edge, .zoomer, .sbar, .scap, .cpick');
+      stage.classList.toggle('lensing', !ctl && (on || zoomed || !!drag)); inside = on && !away && !busy; return; }
+    if (!on) { away = false; leave(); return; }
+    if (away || busy) return;
+    st.fx = (e.clientX - r.left) / r.width; st.fy = (e.clientY - r.top) / r.height;
+    if (!inside) { inside = true; st.closeTgt = Math.max(st.closeTgt, st.close); warm(idx); }
+    run();
+  }
+  // fetch the detail tiles of the work in the background, so they are ready by the time you get close
+  const warmed = new Set();
+  function warm(k) {
+    const it = osd && findItem(k); if (!it || warmed.has(k)) return; warmed.add(k);
+    const src = it.source, urls = [];
+    const top = WORKS[k].deep ? src.maxLevel - 2 : src.maxLevel;   // deep works: the two sharpest levels come in only where you look
+    for (let lv = src.maxLevel - 4; lv <= top; lv++) {
+      if (lv < src.minLevel) continue;
+      const n = src.getNumTiles(lv);
+      for (let y = 0; y < n.y; y++) for (let x = 0; x < n.x; x++) urls.push({ lv, url: src.getTileUrl(lv, x, y) });
+    }
+    // note when each level has fully arrived, lowest first: walking closer never goes past the sharpest level already here
+    const left = {}; urls.forEach(u => left[u.lv] = (left[u.lv] || 0) + 1);
+    ready[k] = src.maxLevel - 5;
+    let i = 0;
+    const next = () => { if (i >= urls.length) return; const u = urls[i++], im = new Image();
+      im.onload = im.onerror = () => { left[u.lv]--; while (left[ready[k] + 1] === 0) ready[k]++; if (ready[k] + 1 > src.maxLevel - 4 && !(ready[k] + 1 in left)) ready[k] = top; run(); next(); };
+      im.src = u.url; };
+    for (let c = 0; c < 4; c++) next();
+  }
+  const ready = {};
+  // deep works: fetch the tiles of the next sharper level around the current view once you get near the limit of the level you have
+  const got = new Set(), asked = new Set(), queue = []; let inflight = 0;
+  function ask(url) { if (asked.has(url)) return; asked.add(url); queue.push(url); pump(); }
+  function pump() { while (inflight < 4 && queue.length) { const url = queue.shift(), im = new Image(); inflight++;
+    im.onload = im.onerror = () => { inflight--; if (im.naturalWidth) got.add(url); else asked.delete(url); run(); pump(); }; im.src = url; } }
+  function deepLevel(k, it, base, width, maxZ) {
+    const src = it.source, b = osd.viewport.getBounds(true), now = Math.exp(Math.log(maxZ) * st.close) * width * dpr();
+    let lvl = base;
+    for (let L = base + 1; L <= src.maxLevel; L++) {
+      const span = src.dimensions.x * Math.pow(2, L - src.maxLevel);      // this level's width in pixels
+      if (now < 0.6 * span / 2) break;                                     // not yet close enough to need it
+      const T = src.getTileWidth(L), n = src.getNumTiles(L), m = 0.6;
+      const xa = Math.max(0, Math.floor((b.x - b.width * m) * span / T)), xb = Math.min(n.x - 1, Math.floor((b.x + b.width * (1 + m)) * span / T));
+      const ya = Math.max(0, Math.floor((b.y - b.height * m) * span / T)), yb = Math.min(n.y - 1, Math.floor((b.y + b.height * (1 + m)) * span / T));
+      let all = true;
+      for (let y = ya; y <= yb; y++) for (let x = xa; x <= xb; x++) { const u = src.getTileUrl(L, x, y); if (!got.has(u)) { all = false; ask(u); } }
+      if (!all) break; lvl = L;
+    }
+    return lvl;
+  }
+  function zoomCap(k, width, maxZ) {
+    const it = osd && findItem(k); if (!it || !(k in ready)) return 1;
+    const src = it.source;
+    const lvl = WORKS[k].deep && ready[k] >= src.maxLevel - 2 ? deepLevel(k, it, ready[k], width, maxZ) : ready[k];
+    if (lvl >= src.maxLevel) return 1;
+    const sharp = src.dimensions.x / Math.pow(2, src.maxLevel - lvl) / dpr();   // screen px per photo width this level can fill without enlarging
+    return sharp <= width ? 0 : Math.min(1, Math.log(sharp / width) / Math.log(maxZ));
+  }
+  function leave() { inside = false; if (!stageOn) { st.fx = 0.5; st.fy = 0.5; } run(); }
+  document.addEventListener('pointermove', point);
+  hold.addEventListener('pointerdown', point);
+  hold.addEventListener('pointerup', e => { if (e.pointerType === 'touch') leave(); });
+  hold.addEventListener('pointercancel', leave);
+  document.documentElement.addEventListener('mouseleave', leave);
+  window.addEventListener('blur', leave);
+  const stepAway = () => { away = true; leave(); };
+  backBtn.addEventListener('click', stepAway);
+  document.addEventListener('keydown', ev => { if (ev.key === 'Escape') stepAway(); });
+
+  /* ---------- one page of works (#one): a work opens to the whole window where it hangs ---------- */
+  const stage = document.getElementById('stage'), sslot = document.getElementById('sslot'), scap = document.getElementById('scap');
+  let stageOn = false, staging = false, wasOn = false, closeArmed = false, homeChrome = [];
+  function wireOne() {
+    site.querySelectorAll('a.big').forEach((a, k) => {
+      a.addEventListener('click', e => { e.preventDefault(); openStage(a, k); });
+    });
+  }
+  function fitStage() { const w = WORKS[idx] || {}, s = Math.floor(Math.min(sslot.clientWidth, sslot.clientHeight) * (w.fill && !w.white ? w.fill / 84 : 1)); hold.style.width = hold.style.height = Math.max(120, s) + 'px'; }
+  async function openStage(a, k) {
+    if (staging || stageOn || !site.classList.contains('one')) return;
+    staging = true;
+    const ph = a.querySelector('img.ph'), c0 = rect(a.querySelector('.pic')), p0 = shot(ph);
+    const w = WORKS[k];
+    scap.innerHTML = `<i>${w.title}</i><br><span>${w.year} · ${w.medium} · ${w.size}</span>`;
+    stage.hidden = false; stage.style.visibility = 'hidden';
+    idx = k; sslot.appendChild(hold); fitStage(); done(k, true);
+    const c1 = { left: 0, top: 0, width: innerWidth, height: innerHeight }, p1 = rect(hold);
+    const fly = document.createElement('div'), im = new Image(); fly.className = 'fly'; im.src = ph.currentSrc || ph.src; fly.appendChild(im);
+    const set = (c, p) => { place(fly, c); Object.assign(im.style, { left: (p.left - c.left) + 'px', top: (p.top - c.top) + 'px', width: p.width + 'px', height: p.height + 'px' }); };
+    set(c0, p0); document.body.appendChild(fly); a.style.visibility = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    await anim(900, x => { const e = glide(x); set(mix(c0, c1, e), mix(p0, p1, e)); });
+    if (art.decode) await art.decode().catch(() => {});
+    stage.style.visibility = '';
+    await frame(); await frame(); fly.remove();
+    a.style.visibility = '';
+    homeChrome = chrome; chrome = [scap];   // the title steps aside as you zoom; the zoom buttons and Close always stay
+    stageOn = true; wasOn = false; staging = false; force = 0; zoomUI();
+    warm(k); run();
+  }
+  async function armClose() {
+    if (closeArmed) return; closeArmed = true;
+    await waitFor(() => inside || st.close < 0.01 || !stageOn);
+    closeArmed = false;
+    if (!inside && stageOn) closeStage();
+  }
+  async function closeStage() {
+    if (!stageOn || staging) return;
+    staging = true;
+    const a = site.querySelectorAll('a.big')[idx];
+    if (st.close > 0.01 || st.closeTgt > 0.01) { away = true; quick = true; inside = false; force = 0; st.closeTgt = 0; run(); await waitFor(() => st.close < 0.01); quick = false; }
+    const c0 = { left: 0, top: 0, width: innerWidth, height: innerHeight }, p0 = rect(hold);
+    const fly = document.createElement('div'), im = new Image(); fly.className = 'fly'; im.src = WORKS[idx].img; fly.appendChild(im);
+    const set = (c, p) => { place(fly, c); Object.assign(im.style, { left: (p.left - c.left) + 'px', top: (p.top - c.top) + 'px', width: p.width + 'px', height: p.height + 'px' }); };
+    set(c0, p0); if (im.decode) await im.decode().catch(() => {});
+    document.body.appendChild(fly);
+    stageOn = false; chrome = homeChrome; lens.classList.remove('on', 'out'); lens.style.setProperty('--d', '38px'); chrome.forEach(el => el.style.opacity = '');
+    reset(); stage.hidden = true; document.documentElement.style.overflow = '';
+    a.style.visibility = 'hidden';
+    const c1 = rect(a.querySelector('.pic')), p1 = shot(a.querySelector('img.ph'));
+    await anim(800, x => { const e = glide(x); set(mix(c0, c1, e), mix(p0, p1, e)); });
+    a.style.visibility = ''; await frame(); fly.remove();
+    staging = false;
+  }
+  document.getElementById('shut').addEventListener('click', closeStage);
+  // zoom is by clear controls: the − / + buttons, a click on the work (zooms in where you click), the scroll wheel, or the - and + keys
+  const STEP = 0.25, zin = document.getElementById('zin'), zout = document.getElementById('zout');
+  function zoomTo(z) { if (!stageOn || staging) return;
+    if (z > 0 && (force || 0) <= 0.001) centre();   // stepping in from far always goes to the middle of the work first
+    force = Math.min(1, Math.max(0, Math.round(z / 0.005) * 0.005)); away = false; warm(idx); zoomUI(); run(); }
+  function zoomUI() { const z = force || 0; lens.classList.toggle('move', z > 0); lens.classList.toggle('max', z >= 1); if (typeof curState === 'function') curState(); zin.disabled = znear.disabled = z >= 1; zout.disabled = zfar.disabled = z <= 0; stage.style.setProperty('--z', z.toFixed(3));
+    stage.querySelectorAll('.zdist').forEach(el => el.textContent = distanceText(z));
+    stage.querySelectorAll('.steps button').forEach(b => b.classList.toggle('here', Math.abs(+b.dataset.z - z) < 0.13)); }
+  const znear = document.getElementById('znear'), zfar = document.getElementById('zfar');
+  znear.addEventListener('click', e => { e.stopPropagation(); zoomTo((force || 0) + STEP); });
+  zfar.addEventListener('click', e => { e.stopPropagation(); zoomTo((force || 0) - STEP); });
+  stage.querySelectorAll('.track').forEach(track => {
+    const fromTrack = e => { const r = track.getBoundingClientRect(); zoomTo(track.dataset.axis === 'y' ? 1 - (e.clientY - r.top) / r.height : (e.clientX - r.left) / r.width); };
+    track.addEventListener('pointerdown', e => { e.stopPropagation(); track.setPointerCapture(e.pointerId); fromTrack(e); });
+    track.addEventListener('pointermove', e => { if (track.hasPointerCapture(e.pointerId)) fromTrack(e); });
+    track.addEventListener('click', e => e.stopPropagation());
+  });
+  stage.querySelectorAll('.steps button').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); zoomTo(+b.dataset.z); }));
+  // how far from the work you'd be standing: about 2.5 times its height when it fills the view, nearer as you zoom in
+  function distanceText(z) {
+    const w = WORKS[idx] || {}, h = parseFloat((w.size || '36').split('×')[0]) || 36, hw = hold.getBoundingClientRect().width || 600;
+    const mz = Math.max(1.5, (w.scan || SCAN_W) * (w.zoom || 1) / dpr() / hw), inches = 2.5 * h / Math.exp(Math.log(mz) * z);
+    return inches >= 24 ? Math.round(inches / 12) + ' ft away' : Math.max(1, Math.round(inches)) + ' in away';
+  }
+  // compare the three kinds of zoom control (temporary)
+  const setZc = v => { stage.dataset.zc = v; document.querySelectorAll('#zpick button').forEach(b => b.setAttribute('aria-pressed', b.dataset.zc === v)); try { localStorage.setItem('zc', v); } catch (e) {} };
+  document.querySelectorAll('#zpick button').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); setZc(b.dataset.zc); }));
+  let zc0 = 'edge';   // Adam chose Edge
+  if (!['line', 'ruler', 'steps', 'edge', 'hair'].includes(zc0)) zc0 = 'line';
+  setZc(zc0);
+  zin.addEventListener('click', e => { e.stopPropagation(); zoomTo((force || 0) + STEP); });
+  zout.addEventListener('click', e => { e.stopPropagation(); zoomTo((force || 0) - STEP); });
+  // drag to move around the work once you are closer
+  function centre() { const f = WORKS[idx].frame || [0, 0, 1, 1]; st.fx = st.px = st.x = f[0] + f[2] / 2; st.fy = f[1] + f[3] / 2; st.py = st.y = st.fy * RATIO; }
+  const clampF = (v, h, span) => h * 2 >= span ? span / 2 : Math.min(span - h, Math.max(h, v));
+  stage.addEventListener('pointerdown', e => {
+    if (!stageOn || staging || (force || 0) <= 0 || e.button > 0 || e.target.closest('button, .track, .v-edge, .zoomer')) return;
+    drag = { x: e.clientX, y: e.clientY, fx: st.x, fy: st.y, moved: false };
+    st.fx = st.px = st.x; st.fy = st.y / RATIO; st.py = st.y;
+    stage.setPointerCapture(e.pointerId); lens.classList.add('grab'); stage.classList.add('dragging'); run();
+  });
+  stage.addEventListener('pointermove', e => {
+    if (!drag || !st.scale) return;
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    if (Math.abs(dx) + Math.abs(dy) > 4) drag.moved = true;
+    st.fx = clampF(drag.fx - dx / st.scale, st.hw, 1);
+    st.fy = clampF(drag.fy - dy / st.scale, st.hh, RATIO) / RATIO;
+    run();
+  });
+  const endDrag = () => { if (!drag) return; noClick = drag.moved ? 'skip' : 'step'; drag = null; lens.classList.remove('grab'); stage.classList.remove('dragging'); run(); };
+  stage.addEventListener('pointerup', endDrag); stage.addEventListener('pointercancel', endDrag);
+  stage.addEventListener('click', e => {
+    if (noClick) { const n = noClick; noClick = false; if (n === 'step' && (force || 0) < 1) zoomTo((force || 0) + STEP); return; }   // a press without a drag while closer: one step nearer
+    if (e.target.closest('button')) return;
+    if (stage.classList.contains('lensing') || e.target.closest('.hold')) { if ((force || 0) < 1) zoomTo((force || 0) + STEP); }
+    else if (e.target === stage || e.target === sslot) closeStage();                       // a click on the bare wall puts the work back
+  });
+  stage.addEventListener('wheel', e => { if (!stageOn) return; e.preventDefault(); zoomTo((force || 0) - e.deltaY * 0.0025); }, { passive: false });
+  document.addEventListener('keydown', e => {
+    if (!stageOn) return;
+    if (e.key === 'Escape') closeStage();
+    else if (e.key === '+' || e.key === '=') zoomTo((force || 0) + STEP);
+    else if (e.key === '-' || e.key === '_') zoomTo((force || 0) - STEP);
+  });
+  // the magnifier follows the pointer with a little softness
+  const lens = document.getElementById('lens'), note = document.getElementById('lensnote'), fine = matchMedia('(hover: hover) and (pointer: fine)');
+  // Adam chose the Move cursor (4 arrows); these are versions of it that stay visible over the work. Adam picks one, then this goes
+  const MOVE = '<path d="M29 6v46M6 29h46"/><polyline points="25,10 29,6 33,10"/><polyline points="25,48 29,52 33,48"/><polyline points="10,25 6,29 10,33"/><polyline points="48,25 52,29 48,33"/>';
+  const SH = 'drop-shadow(0 0 1.5px rgba(0,0,0,.75)) drop-shadow(0 1px 3px rgba(0,0,0,.35))', SOFT = 'drop-shadow(0 0 3px rgba(0,0,0,.55)) drop-shadow(0 2px 7px rgba(0,0,0,.3))';
+  const mv = (inner, lw = 1.5, f = SH, vb = '0 0 58 58', extra = '') => `<svg viewBox="${vb}" fill="none" stroke="#fff" stroke-width="${lw}" stroke-linecap="round" stroke-linejoin="round" style="filter: ${f}"${extra}>${inner}</svg>`;
+  const HEADS = '<polyline points="25,10 29,6 33,10"/><polyline points="25,48 29,52 33,48"/><polyline points="10,25 6,29 10,33"/><polyline points="48,25 52,29 48,33"/>';
+  const TRI = '<path d="M29 4l-4.2 6.2h8.4zM29 54l-4.2-6.2h8.4zM4 29l6.2-4.2v8.4zM54 29l-6.2-4.2v8.4z" fill="#fff" stroke="none"/>';
+  // Adam chose the open-centre move cursor; soft-edged versions, with open and with solid arrowheads
+  const OPEN = '<path d="M29 6v17M29 35v17M6 29h17M35 29h17"/>' + HEADS;
+  const OPENS = '<path d="M29 10v13M29 35v13M10 29h13M35 29h13"/>' + TRI;   // solid points
+  const sf = (b, sh = SH) => `blur(${b}px) ${sh}`;
+  const CURS = [
+    ['Open, a little soft', mv(OPEN, 1.5, sf(0.3))],
+    ['Open, softer', mv(OPEN, 1.6, sf(0.55))],
+    ['Open, softest', mv(OPEN, 1.9, sf(0.85))],
+    ['Open, soft + wide shadow', mv(OPEN, 1.7, sf(0.55, SOFT))],
+    ['Solid, a little soft', mv(OPENS, 1.4, sf(0.3))],
+    ['Solid, softer', mv(OPENS, 1.5, sf(0.55))],
+    ['Solid, softest', mv(OPENS, 1.8, sf(0.85))],
+    ['Solid, soft + wide shadow', mv(OPENS, 1.6, sf(0.55, SOFT))]
+  ];
+  // Adam chose S2: open centre, solid points, softer edge
+  const lensb = document.getElementById('lensb');
+  lensb.innerHTML = CURS[5][1]; lens.classList.add('solid');
+  function curState() {}
+  let lx = -100, ly = -100, tx = -100, ty = -100, lraf = 0, sayT = 0;
+  const lensLoop = () => { lx += (tx - lx) * 0.35; ly += (ty - ly) * 0.35; lens.style.transform = `translate(${lx.toFixed(1)}px, ${ly.toFixed(1)}px)`; note.style.transform = `translate(${(lx + 30).toFixed(1)}px, ${(ly - 14).toFixed(1)}px)`; lraf = Math.abs(tx - lx) + Math.abs(ty - ly) > 0.3 ? requestAnimationFrame(lensLoop) : 0; };
+  document.addEventListener('pointermove', e => {
+    if (e.pointerType !== 'mouse' || !fine.matches) return;
+    tx = e.clientX; ty = e.clientY; if (!lraf) lraf = requestAnimationFrame(lensLoop);
+    const overWork = site.classList.contains('one') && !stageOn && !staging && e.target.closest && e.target.closest('#site a.big');
+    const onStage = stageOn && stage.classList.contains('lensing');
+    lens.classList.toggle('move', !!(onStage && (force || 0) > 0)); lens.classList.toggle('max', !!(onStage && (force || 0) >= 1));
+    lens.classList.toggle('on', !!(overWork || onStage));
+    lens.classList.remove('out');
+    if (!onStage) lens.style.setProperty('--d', '38px');
+  });
+  setInterval(() => { const zoomed = stageOn && st.close > 0.08 && lens.classList.contains('on'); if (zoomed) { if (!sayT) sayT = performance.now(); } else sayT = 0; note.classList.toggle('say', zoomed && !hintSeen && fine.matches); if (zoomed && performance.now() - sayT >= 3500) hintSeen = true; }, 120);   // the words show only the first time, for a few seconds
+  let hintSeen = false;
+  document.documentElement.addEventListener('mouseleave', () => lens.classList.remove('on'));
+
+  new ResizeObserver(() => { if (stageOn) { fitStage(); run(); } }).observe(sslot);
+
+  /* ---------- the work travels between the grid and its own page ---------- */
+  let flying = false;
+  const glide = x => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;     // soft start, soft landing
+  const mix = (a, b, t) => ({ left: a.left + (b.left - a.left) * t, top: a.top + (b.top - a.top) * t, width: a.width + (b.width - a.width) * t, height: a.height + (b.height - a.height) * t });
+  const rect = el => { const r = el.getBoundingClientRect(); return { left: r.left, top: r.top, width: r.width, height: r.height }; };
+  // the photo as actually drawn in a grid box: always square (the box may be a rectangle), so a travelling work never changes shape
+  const shot = ph => { const r = ph.getBoundingClientRect(), d = Math.min(r.width, r.height); return { left: r.left + (r.width - d) / 2, top: r.top + (r.height - d) / 2, width: d, height: d }; };
+  async function flight(src, c0, p0, toPage) {
+    // c = the piece of wall (clip), p = the photo inside it; toPage() swaps the page and returns the targets and what to hide
+    const fly = document.createElement('div'), im = new Image(); fly.className = 'fly'; im.src = src; fly.appendChild(im);
+    const set = (c, p) => { place(fly, c); Object.assign(im.style, { left: (p.left - c.left) + 'px', top: (p.top - c.top) + 'px', width: p.width + 'px', height: p.height + 'px' }); };
+    set(c0, p0);
+    if (im.decode) await im.decode().catch(() => {});
+    document.body.appendChild(fly);
+    site.classList.add('fading'); site.style.opacity = 0;
+    await anim(320, () => {});
+    const t = await toPage();
+    t.hide.style.visibility = 'hidden';
+    await frame();
+    site.style.opacity = 1;
+    await anim(1100, x => { const e = glide(x); set(mix(c0, t.c, e), mix(p0, t.p, e)); });
+    if (t.hide === hold && art.decode) await art.decode().catch(() => {});
+    t.hide.style.visibility = '';
+    await frame(); await frame();
+    fly.remove(); site.classList.remove('fading'); site.style.opacity = '';
+  }
+  async function openFrom(k) {
+    const a = site.querySelector(`a.big[href="#work-${k + 1}"]`), ph = a && a.querySelector('img.ph');
+    if (!a || !ph || !ph.complete) return render();
+    const c0 = rect(a.querySelector('.pic')), p0 = shot(ph);
+    a.style.visibility = 'hidden';
+    await flight(ph.currentSrc || ph.src, c0, p0, async () => {
+      render();
+      // the travelling photo stays on top until the work's own tiles are drawn underneath it (at most 2.5 s)
+      const t0 = performance.now(), it = osd && findItem(k);
+      const ready = waitFor(() => !it || (it.getFullyLoaded && it.getFullyLoaded()) || performance.now() - t0 > 2500);
+      return { c: rect(site.querySelector('.panel')), p: rect(hold), hide: hold, ready };
+    });
+  }
+  async function closeTo(k) {
+    const panel = site.querySelector('.panel');
+    if (!panel || park.contains(hold)) return render();
+    const c0 = rect(panel), p0 = rect(hold);
+    site.classList.add('nohover');
+    await flight(WORKS[k].img, c0, p0, async () => {
+      render();
+      const a = site.querySelector(`a.big[href="#work-${k + 1}"]`), ph = a.querySelector('img.ph');
+      ph.loading = 'eager'; if (ph.decode) await ph.decode().catch(() => {});
+      const r = a.getBoundingClientRect();
+      if (r.top < 0 || r.bottom > innerHeight) window.scrollTo(0, Math.max(0, scrollY + r.top - Math.max(40, (innerHeight - r.height) / 2)));
+      return { c: rect(a.querySelector('.pic')), p: shot(ph), hide: a };
+    });
+    let sx = null, sy = null;
+    const wake = e => { if (sx === null) { sx = e.clientX; sy = e.clientY; return; } if (Math.hypot(e.clientX - sx, e.clientY - sy) > 8) { site.classList.remove('nohover'); document.removeEventListener('pointermove', wake); } };
+    document.addEventListener('pointermove', wake);
+  }
+  window.addEventListener('hashchange', async () => {
+    const r = parse();
+    if (stageOn) { stageOn = false; stage.hidden = true; document.documentElement.style.overflow = ''; }
+    if (flying) return;
+    if (still.matches) return render();
+    if (route.v === 'home' && r.v === 'work') { flying = true; await openFrom(r.k); flying = false; }
+    else if (route.v === 'work' && r.v === 'home' && !busy && st.close < 0.01) { flying = true; await closeTo(idx); flying = false; }
+    else if ((route.v === 'about') !== (r.v === 'about') && !still.matches) {   // Work <-> Information: a soft fade out, then in
+      // crossfade: a copy of the page you are leaving lies over the new one and fades out while the new one fades in
+      flying = true;
+      const ghost = site.cloneNode(true), y = scrollY;
+      ghost.classList.add('ghost'); ghost.setAttribute('aria-hidden', 'true');
+      Object.assign(ghost.style, { position: 'fixed', left: 0, right: 0, top: -y + 'px', zIndex: 20, pointerEvents: 'none' });
+      document.body.appendChild(ghost);
+      render(); const m1 = site.querySelector('main');   // only the page body fades; the header stays put
+      m1.style.opacity = '0'; void getComputedStyle(m1).opacity;
+      m1.classList.add('xfade'); ghost.classList.add('xfade'); void m1.offsetWidth;
+      await frame();
+      m1.style.opacity = ''; ghost.style.opacity = 0;
+      await new Promise(res => setTimeout(res, 1850));
+      ghost.remove(); m1.classList.remove('xfade');
+      flying = false;
+    }
+    else render();
+    if (parse().v !== route.v || (route.v === 'work' && parse().k !== idx)) render();   // the address changed again while a work was travelling
+  });
+  render();
+})();
+</script>
+
+<form name="contact" data-netlify="true" netlify-honeypot="bot-field" hidden><input name="bot-field"><input name="name"><input name="email"><textarea name="message"></textarea></form>
