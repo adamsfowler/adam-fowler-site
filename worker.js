@@ -71,7 +71,8 @@ export default {
     }
 
     if (url.pathname === '/api/stats' || url.pathname === '/api/message') {
-      if (!env.ADMIN_KEY || req.headers.get('Authorization') !== `Bearer ${env.ADMIN_KEY}`) return json({ error: env.ADMIN_KEY ? 'not allowed' : 'no password set yet' }, 401);
+      const pw = String(env.ADMIN_KEY || '').trim(), given = String(req.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '').trim();
+      if (!pw || given !== pw) return json({ error: pw ? 'not allowed' : 'no password set yet' }, 401);   // spaces around the password are ignored
       if (req.method === 'GET' && url.pathname === '/api/stats') return json(await store.stats());
       if (req.method === 'POST' && url.pathname === '/api/message') {   // mark a message read, or remove it
         let b = {}; try { b = await req.json(); } catch { }
