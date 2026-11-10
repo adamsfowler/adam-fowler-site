@@ -2,5 +2,9 @@
 .git/**
 README.md
 wrangler.jsonc
+worker.js
 .assetsignore
 .gitignore
+node_modules
+.wrangler
+.dev.vars

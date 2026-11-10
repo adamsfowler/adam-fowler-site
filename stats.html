@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Statistics · Adam Fowler</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22%3E%3Crect width=%2216%22 height=%2216%22 fill=%22%23ebebeb%22/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400&display=swap">
+<style>
+/* Adam's private statistics page: who came to the site, what they looked at, and the contact form's messages.
+   Same quiet look as the site: Jost, thin, greys. Not linked from the site and kept out of search engines. */
+:root { --page: #f8f8f7; --ink: #3c3c38; --muted: #85857f; --line: #e2e2de; --bar: #c9c9c4; --hi: #6f6f68; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink); font: 300 15px/1.55 'Jost', system-ui, sans-serif; }
+main { max-width: 980px; margin: 0 auto; padding: 48px 20px 80px; }
+h1 { font-weight: 200; font-size: 34px; margin: 0 0 4px; letter-spacing: .01em; }
+h2 { font-weight: 300; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 52px 0 14px; }
+.sub { color: var(--muted); margin: 0 0 8px; }
+a { color: inherit; }
+button { font: inherit; color: var(--ink); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+.row { display: flex; flex-wrap: wrap; gap: 10px 26px; align-items: baseline; color: var(--muted); font-size: 13px; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); margin-top: 28px; }
+.kpi { background: var(--page); padding: 16px 18px; }
+.kpi b { display: block; font-weight: 200; font-size: 32px; line-height: 1.1; }
+.kpi span { color: var(--muted); font-size: 13px; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th { text-align: left; font-weight: 300; color: var(--muted); font-size: 12px; letter-spacing: .04em; padding: 6px 10px 6px 0; border-bottom: 1px solid var(--line); }
+td { padding: 7px 10px 7px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.bars { display: flex; align-items: flex-end; gap: 3px; height: 120px; border-bottom: 1px solid var(--line); }
+.bars div { flex: 1; background: var(--bar); min-height: 1px; position: relative; }
+.bars div:hover { background: var(--hi); }
+.bars div[title]:hover::after { content: attr(title); position: absolute; bottom: 100%; left: 50%; transform: translate(-50%, -6px); white-space: nowrap; background: var(--ink); color: #fff; font-size: 12px; padding: 3px 7px; }
+.axis { display: flex; justify-content: space-between; color: var(--muted); font-size: 12px; margin-top: 4px; }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 48px; }
+@media (max-width: 720px) { .cols { grid-template-columns: 1fr; } .hide-s { display: none; } }
+.meter { display: inline-block; height: 5px; background: var(--bar); vertical-align: middle; margin-right: 8px; }
+.msg { border-top: 1px solid var(--line); padding: 16px 0; }
+.msg.unread { }
+.msg .who { display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: baseline; }
+.msg .who b { font-weight: 400; }
+.msg .who .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink); display: inline-block; }
+.msg p { white-space: pre-wrap; margin: 8px 0 8px; }
+.msg .acts { display: flex; gap: 18px; font-size: 13px; color: var(--muted); }
+.empty { color: var(--muted); }
+.visit { border-top: 1px solid var(--line); padding: 12px 0; font-size: 14px; }
+.visit .head { color: var(--muted); font-size: 13px; }
+.visit ol { margin: 6px 0 0; padding-left: 18px; }
+form.key { margin-top: 40px; display: flex; gap: 14px; align-items: baseline; flex-wrap: wrap; }
+form.key input { font: inherit; color: var(--ink); background: transparent; border: 0; border-bottom: 1px solid #c9c9c5; padding: 4px 0 6px; min-width: 260px; outline: none; }
+#err { color: #a0574a; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Statistics</h1>
+  <p class="sub">adamfowler.com · visitors are counted anonymously</p>
+  <div id="out"></div>
+</main>
+<script>
+const $ = s => document.querySelector(s), out = $('#out');
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmt = n => (n || 0).toLocaleString('en-US');
+const secs = s => { s = Math.round(s || 0); return s < 60 ? s + ' s' : s < 3600 ? Math.floor(s / 60) + ' min ' + (s % 60 ? s % 60 + ' s' : '') : (s / 3600).toFixed(1) + ' h'; };
+const when = iso => { const d = new Date(iso); return d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); };
+const ls = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { return null; } };
+let key = ''; try { key = sessionStorage.getItem('af-stats-key') || ls('af-stats-key') || ''; } catch (e) { }
+
+function ask(msg) {
+  out.innerHTML = `<form class="key" id="kf"><input type="password" placeholder="Password" autocomplete="current-password" autofocus><button>Open</button><span id="err">${esc(msg || '')}</span></form>`;
+  $('#kf').addEventListener('submit', e => { e.preventDefault(); key = e.target.querySelector('input').value.trim(); try { sessionStorage.setItem('af-stats-key', key); ls('af-stats-key', key); } catch (x) { } load(); });
+}
+async function load() {
+  if (!key) return ask();
+  out.innerHTML = '<p class="sub" style="margin-top:40px">Loading…</p>';
+  let r, d; try { r = await fetch('/api/stats', { cache: 'no-store', headers: { Authorization: 'Bearer ' + key } }); d = await r.json(); } catch (e) { return ask('Could not reach the site’s server.'); }
+  if (r.status === 401) { try { sessionStorage.removeItem('af-stats-key'); } catch (e) { } ls('af-stats-key', null); key = ''; return ask(d.error === 'no password set yet' ? 'No password has been set in Cloudflare yet.' : 'That password didn’t work.'); }
+  show(d);
+}
+const table = (cols, rows, empty = 'Nothing yet.') => !rows.length ? `<p class="empty">${empty}</p>` :
+  `<table><tr>${cols.map(c => `<th class="${c.n ? 'n' : ''} ${c.s ? 'hide-s' : ''}">${c.h}</th>`).join('')}</tr>${rows.map(r => `<tr>${cols.map(c => `<td class="${c.n ? 'n' : ''} ${c.s ? 'hide-s' : ''}">${c.f(r)}</td>`).join('')}</tr>`).join('')}</table>`;
+const meter = (v, max) => `<span class="meter" style="width:${Math.max(2, Math.round(60 * (v || 0) / Math.max(max, 1)))}px"></span>`;
+
+function show(d) {
+  const counted = !ls('af-not-counted');
+  const unread = d.messages.filter(m => m.unread).length;
+  // the last 30 days, oldest at the left
+  const byDay = Object.fromEntries(d.days.map(x => [x.day, x])), days = [];
+  for (let i = 29; i >= 0; i--) { const t = new Date(Date.now() - i * 864e5), k = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(t); days.push({ k, v: byDay[k]?.visitors || 0, o: byDay[k]?.opens || 0 }); }
+  const dmax = Math.max(1, ...days.map(x => x.v));
+  const wmax = Math.max(1, ...d.works.map(w => w.visitors));
+  const smax = Math.max(1, ...d.sources.map(s => s.visitors));
+  const hmax = Math.max(1, ...d.hours.map(h => h.visitors)), hours = Array.from({ length: 24 }, (_, h) => d.hours.find(x => x.hour === h)?.visitors || 0);
+  // the latest visits, each as the list of what it did
+  const visits = []; const bySid = {};
+  d.recent.forEach(e => { let v = bySid[e.sid]; if (!v) { v = bySid[e.sid] = { first: e, last: e, steps: [] }; visits.push(v); } v.last = e;
+    if (e.ev === 'view') v.steps.push(e.page === 'bio' ? 'read the bio' : 'looked at the drawings');
+    else if (e.ev === 'look') v.steps.push(`looked at <i>${esc(e.label || 'work ' + (e.work + 1))}</i> for ${secs(e.v / 1000)}${e.z > 0 ? ', zoomed ' + Math.round(e.z * 100) + '% of the way in' : ''}`);
+    else if (e.ev === 'out') v.steps.push('followed a link to ' + esc(e.k));
+    else if (e.ev === 'contact') v.steps.push('sent a message'); });
+  visits.reverse();
+
+  out.innerHTML = `
+  <div class="row" style="margin-top:14px">
+    <span>${counted ? 'This browser is counted.' : 'This browser is not counted.'} <button id="nc">${counted ? 'Don’t count this browser' : 'Count it again'}</button></span>
+    <button id="rl">Refresh</button>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><b>${fmt(d.visitors)}</b><span>visitors</span></div>
+    <div class="kpi"><b>${fmt(d.visits)}</b><span>visits</span></div>
+    <div class="kpi"><b>${fmt(d.opens)}</b><span>works opened</span></div>
+    <div class="kpi"><b>${secs((d.ms || 0) / 1000 / Math.max(d.visits, 1))}</b><span>average visit</span></div>
+    <div class="kpi"><b>${fmt(d.messages.length)}</b><span>messages${unread ? ` · ${unread} new` : ''}</span></div>
+  </div>
+
+  <h2>Messages</h2>
+  ${d.messages.length ? d.messages.map(m => `<div class="msg ${m.unread ? 'unread' : ''}" data-id="${m.id}">
+    <div class="who">${m.unread ? '<span class="dot" title="new"></span>' : ''}<b>${esc(m.name)}</b><a href="mailto:${esc(m.email)}">${esc(m.email)}</a><span class="sub">${when(m.created)}${m.place ? ' · ' + esc(m.place) : ''}</span></div>
+    <p>${esc(m.message)}</p>
+    <div class="acts"><a href="mailto:${esc(m.email)}?subject=${encodeURIComponent('Re: your message')}">Reply</a><button data-a="${m.unread ? 'read' : 'unread'}">${m.unread ? 'Mark as read' : 'Mark as new'}</button><button data-a="delete">Delete</button></div>
+  </div>`).join('') : '<p class="empty">No messages yet. Messages sent from the Bio page arrive here.</p>'}
+
+  <h2>Visitors, last 30 days</h2>
+  <div class="bars">${days.map(x => `<div style="height:${Math.round(100 * x.v / dmax)}%" title="${x.k.slice(5)}: ${x.v} visitor${x.v === 1 ? '' : 's'}, ${x.o} work${x.o === 1 ? '' : 's'} opened"></div>`).join('')}</div>
+  <div class="axis"><span>${days[0].k.slice(5)}</span><span>today</span></div>
+
+  <h2>The works</h2>
+  ${table([
+    { h: 'Work', f: w => `<i>${esc(w.label || 'Work ' + (w.work + 1))}</i>` },
+    { h: 'Visitors', n: 1, f: w => meter(w.visitors, wmax) + fmt(w.visitors) },
+    { h: 'Opened', n: 1, s: 1, f: w => fmt(w.opens) },
+    { h: 'Average look', n: 1, f: w => w.looks ? secs(w.secs) : '–' },
+    { h: 'Zoomed in', n: 1, f: w => w.looks ? Math.round(100 * w.zoomed / w.looks) + '%' : '–' },
+    { h: 'How close', n: 1, s: 1, f: w => w.depth ? Math.round(w.depth * 100) + '%' : '–' },
+  ], d.works, 'No works opened yet.')}
+  <p class="sub" style="font-size:13px;margin-top:8px">“Zoomed in” is the share of looks that used the zoom; “how close” is how far along the near–far line they went, on average.</p>
+
+  <div class="cols">
+    <div><h2>Where visits came from</h2>${table([{ h: 'Source', f: s => esc(s.src) }, { h: 'Visitors', n: 1, f: s => meter(s.visitors, smax) + fmt(s.visitors) }], d.sources)}</div>
+    <div><h2>Pages</h2>${table([{ h: 'Page', f: p => p.page === 'bio' ? 'Bio' : 'Drawings' }, { h: 'Visitors', n: 1, f: p => fmt(p.visitors) }, { h: 'Average time', n: 1, f: p => secs(p.secs) }], d.pages)}
+      <h2>Devices</h2>${table([{ h: 'Device', f: x => esc(x.dev) }, { h: 'Visitors', n: 1, f: x => fmt(x.visitors) }], d.devices)}</div>
+  </div>
+  <div class="cols">
+    <div><h2>Countries</h2>${table([{ h: 'Country', f: c => esc(c.country) }, { h: 'Visitors', n: 1, f: c => fmt(c.visitors) }], d.countries)}</div>
+    <div><h2>Cities</h2>${table([{ h: 'City', f: c => esc([c.city, c.region, c.country].filter(Boolean).join(', ')) }, { h: 'Visitors', n: 1, f: c => fmt(c.visitors) }], d.places)}</div>
+  </div>
+  <h2>Networks</h2>
+  <p class="sub" style="font-size:13px">The company or institution whose internet connection a visitor used, such as a museum, university or gallery (most people show their home internet provider).</p>
+  ${table([{ h: 'Network', f: o => esc(o.org) }, { h: 'Visitors', n: 1, f: o => fmt(o.visitors) }, { h: 'Visits', n: 1, s: 1, f: o => fmt(o.visits) }, { h: 'Last', n: 1, f: o => esc(o.last.slice(5)) }], d.orgs)}
+  <div class="cols">
+    <div><h2>Coming back</h2>${table([{ h: '', f: x => x.name }, { h: 'Visitors', n: 1, f: x => fmt(x.visitors) }], d.returning.filter(x => x.visitors))}</div>
+    <div><h2>Links followed</h2>${table([{ h: 'To', f: x => esc(x.k) }, { h: 'Visitors', n: 1, f: x => fmt(x.visitors) }], d.outs)}</div>
+  </div>
+  <h2>Time of day (New York)</h2>
+  <div class="bars" style="height:70px">${hours.map((v, h) => `<div style="height:${Math.round(100 * v / hmax)}%" title="${h}:00 – ${v} visitor${v === 1 ? '' : 's'}"></div>`).join('')}</div>
+  <div class="axis"><span>midnight</span><span>noon</span><span>11 pm</span></div>
+
+  <h2>Latest visits</h2>
+  ${visits.length ? visits.map(v => { const f = v.first; return `<div class="visit"><div class="head">${when(f.created)} · ${esc([f.city, f.region, f.country].filter(Boolean).join(', ') || 'somewhere')}${f.org ? ' · ' + esc(f.org) : ''} · ${esc(f.dev || '')} · from ${esc(f.src || 'direct')}</div><ol>${v.steps.map(s => `<li>${s}</li>`).join('')}</ol></div>`; }).join('') : '<p class="empty">No visits yet.</p>'}
+  `;
+  $('#nc').addEventListener('click', () => { ls('af-not-counted', counted ? '1' : null); show(d); });
+  $('#rl').addEventListener('click', load);
+  out.querySelectorAll('.msg button').forEach(b => b.addEventListener('click', async () => {
+    const id = +b.closest('.msg').dataset.id, action = b.dataset.a;
+    if (action === 'delete' && !confirm('Delete this message?')) return;
+    await fetch('/api/message', { method: 'POST', headers: { Authorization: 'Bearer ' + key, 'Content-Type': 'application/json' }, body: JSON.stringify({ id, action }) });
+    load();
+  }));
+}
+load();
+</script>
+</body>
+</html>

@@ -1,5 +1,10 @@
 {
+  // The site's files are served as they are; worker.js only answers /api/ (statistics and the contact form).
   "name": "adam-fowler-site",
+  "main": "worker.js",
   "compatibility_date": "2026-09-01",
-  "assets": { "directory": "." }
+  "assets": { "directory": ".", "binding": "ASSETS" },
+  "durable_objects": { "bindings": [{ "name": "STORE", "class_name": "Store" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Store"] }],
+  "observability": { "enabled": true }
 }
