@@ -146,6 +146,7 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
 /* moving between the grid and a work's page: the work itself travels, on its piece of wall */
 .fly { position: fixed; z-index: 30; overflow: hidden; background: var(--wall); pointer-events: none; will-change: left, top, width, height; }
 .fly img { position: absolute; max-width: none; display: block; }
+.icover { position: fixed; inset: 0; z-index: 14; background: #ebebeb; }
 #site.fading { transition: opacity .32s ease; }
 /* one-page version (#one): resting on a work opens it to the whole window, right there; walk closer works as on a work page */
 #site.one .grid > .big { transform: none !important; box-shadow: none !important; cursor: zoom-in; }
@@ -625,6 +626,7 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
   const hold = document.getElementById('hold'), walkEl = document.getElementById('walk'), art = document.getElementById('art');
   const backBtn = document.getElementById('stepBack'), scaleEl = document.getElementById('scale');
   const touch = matchMedia('(hover: none)').matches;
+  let opening = null, introDone = false;
   let route = { d: 'jost', v: 'home', k: 0 }, slotRO = null, chrome = [];
 
   function parse() {
@@ -652,7 +654,7 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
     chrome = [...site.querySelectorAll('.chrome')];
     if (r.v === 'work') mount(r.k);
     if (r.v === 'about') wireContact();
-    if (r.v === 'one') { wireOne(); if (r.open) requestAnimationFrame(() => { const a = site.querySelectorAll('a.big')[r.k]; if (a) { a.scrollIntoView({ block: 'center' }); requestAnimationFrame(() => openStage(a, r.k)); } }); }
+    if (r.v === 'one') { wireOne(); if (!r.open && !introDone) { introDone = true; openingZoom(); } if (r.open) requestAnimationFrame(() => { const a = site.querySelectorAll('a.big')[r.k]; if (a) { a.scrollIntoView({ block: 'center' }); requestAnimationFrame(() => openStage(a, r.k)); } }); }
     window.scrollTo(0, 0);
   }
 
@@ -765,10 +767,11 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
 
   function tick(now) {
     raf = 0;
-    if ((route.v !== 'work' && !stageOn) || !hold.isConnected || park.contains(hold)) return;
+    if ((route.v !== 'work' && !stageOn && !opening) || !hold.isConnected || park.contains(hold)) return;
     const dt = Math.min(0.05, (now - lastT) / 1000); lastT = now;
     const calm = still.matches, hr = hold.getBoundingClientRect();
-    if (force !== null) st.closeTgt = force > st.closeTgt ? Math.min(force, st.closeTgt + dt / 1.6) : Math.max(force, st.closeTgt - dt / 1.6);
+    if (opening) st.closeTgt = opening.go ? Math.max(0, st.closeTgt - dt / INTRO_OUT) : st.closeTgt;   // opening: pulling back from close up
+    else if (force !== null) st.closeTgt = force > st.closeTgt ? Math.min(force, st.closeTgt + dt / 1.6) : Math.max(force, st.closeTgt - dt / 1.6);
     else if (inside) st.closeTgt = Math.min(1, st.closeTgt + dt / 2.8);      // resting on the work: drift closer
     else st.closeTgt = Math.max(0, st.closeTgt - dt / 2.8);                  // off the work: drift back out at the same pace
     { const w0 = WORKS[idx] || {}, mz = Math.max(1.5, (w0.scan || SCAN_W) * (w0.zoom || 1) / dpr() / hr.width);
@@ -788,7 +791,7 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
     }
     const chromeO = (1 - smooth(0.02, 0.25, st.close)).toFixed(3);
     chrome.forEach(el => el.style.opacity = chromeO);
-    backBtn.hidden = st.close < 0.5 || stageOn || staging;
+    backBtn.hidden = st.close < 0.5 || stageOn || staging || !!opening;
     if (stageOn) lens.style.setProperty('--d', ((force || 0) > 0 ? 30 : 38) + 'px');
     // hand over to the tiles only once they are all drawn at this size, so the switch can't be seen
     if (st.close <= 0.0005) tilesOn = false;
@@ -814,7 +817,7 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
       osd.viewport.zoomTo(scale / box.w, null, true);
       osd.viewport.panTo(new OpenSeadragon.Point(cx, cy), true);
     }
-    const settled = force === null && !inside && st.close === 0 && Math.abs(st.x - st.fx) < 1e-3 && Math.abs(st.y - st.fy * RATIO) < 1e-3 && Math.abs(st.px - st.fx) < 1e-3;
+    const settled = !opening && force === null && !inside && st.close === 0 && Math.abs(st.x - st.fx) < 1e-3 && Math.abs(st.y - st.fy * RATIO) < 1e-3 && Math.abs(st.px - st.fx) < 1e-3;
     if (!settled) raf = requestAnimationFrame(tick);
   }
   function run() { if (!raf) { lastT = performance.now(); raf = requestAnimationFrame(tick); } }
@@ -907,7 +910,7 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
   }
   function fitStage() { const w = WORKS[idx] || {}, s = Math.floor(Math.min(sslot.clientWidth, sslot.clientHeight) * (w.fill && !w.white ? w.fill / 84 : 1)); hold.style.width = hold.style.height = Math.max(120, s) + 'px'; }
   async function openStage(a, k) {
-    if (staging || stageOn || !site.classList.contains('one')) return;
+    if (staging || stageOn || opening || !site.classList.contains('one')) return;
     staging = true;
     const ph = a.querySelector('img.ph'), c0 = rect(a.querySelector('.pic')), p0 = shot(ph);
     const w = WORKS[k];
@@ -953,6 +956,41 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
     staging = false;
   }
   document.getElementById('shut').addEventListener('click', closeStage);
+
+  // opening (Adam, trial): the site opens close up on one of the drawings near the top, then pulls back on its own until the drawing sits in its place in the grid
+  const INTRO_OUT = 3.4;   // seconds to pull back (the soft start and landing add about a second)
+  async function openingZoom() {
+    if (still.matches || !osd) { introDone = true; return; }
+    const LG = [0, 1, 2, 3, 8, 9, 11], all = [...site.querySelectorAll('a.big')];
+    const onPage = all.map((a, k) => ({ a, k, r: a.getBoundingClientRect() })).filter(o => o.r.top < innerHeight * 0.55 && o.r.width > 0).sort((p, q) => p.r.top - q.r.top || p.r.left - q.r.left);
+    const pick = onPage.find(o => LG.includes(o.k)) || onPage[0]; if (!pick) return;
+    const { a, k } = pick, pic = a.querySelector('.pic'), ph = a.querySelector('img.ph');
+    const cover = document.createElement('div'); cover.className = 'icover'; document.body.appendChild(cover);
+    document.documentElement.style.overflow = 'hidden';
+    opening = { go: false };
+    const finish = () => { ph.style.visibility = ''; reset(); Object.assign(hold.style, { position: '', left: '', top: '', width: '', height: '' }); walkEl.style.opacity = ''; walkEl.style.transition = '';
+      opening = null; document.documentElement.style.overflow = ''; cover.remove(); chrome.forEach(el => el.style.opacity = ''); };
+    try {
+      await waitFor(() => osd.world.getItemCount() === WORKS.length);
+      const c = pic.getBoundingClientRect(), p = shot(ph);
+      Object.assign(hold.style, { position: 'absolute', left: (p.left - c.left) + 'px', top: (p.top - c.top) + 'px', width: p.width + 'px', height: p.height + 'px' });
+      pic.appendChild(hold); done(k, true); centre(); warm(k);
+      if (art.decode) await art.decode().catch(() => {});
+      // start about a third of the drawing across the window, never closer than the photo allows
+      const w = WORKS[k], f = w.frame || [0, 0, 1, 1], maxZ = Math.max(1.5, (w.scan || SCAN_W) * (w.zoom || 1) / dpr() / p.width);
+      const z0 = Math.min(0.8, Math.max(0.3, Math.log(3 * Math.max(innerWidth, innerHeight) / f[2] / p.width) / Math.log(maxZ)));
+      st.close = st.mid = st.closeTgt = z0; ph.style.visibility = 'hidden';
+      walkEl.style.opacity = 0; run();
+      const t0 = performance.now();
+      await waitFor(() => hold.classList.contains('tiles') || performance.now() - t0 > 5000);
+      if (!hold.classList.contains('tiles')) { finish(); return; }   // too slow to load: just show the page
+      walkEl.style.transition = 'opacity 1.2s ease'; walkEl.style.opacity = 1;
+      await new Promise(r => setTimeout(r, 1500));
+      cover.remove(); opening.go = true; run();
+      await waitFor(() => st.close === 0);
+      await frame(); finish();
+    } catch (e) { finish(); }
+  }
   // zoom is by clear controls: the − / + buttons, a click on the work (zooms in where you click), the scroll wheel, or the - and + keys
   const STEP = 0.25, zin = document.getElementById('zin'), zout = document.getElementById('zout');
   function zoomTo(z) { if (!stageOn || staging) return;
