@@ -803,7 +803,7 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
     const dt = Math.min(0.05, (now - lastT) / 1000); lastT = now;
     const calm = still.matches, hr = hold.getBoundingClientRect();
     if (opening) st.closeTgt = opening.go ? Math.max(0, st.closeTgt - dt / INTRO_OUT) : st.closeTgt;   // opening: pulling back from close up
-    else if (force !== null) st.closeTgt = force > st.closeTgt ? Math.min(force, st.closeTgt + dt / 1.6) : Math.max(force, st.closeTgt - dt / 1.6);
+    else if (force !== null) st.closeTgt = force > st.closeTgt ? Math.min(force, st.closeTgt + dt / 1.1) : Math.max(force, st.closeTgt - dt / 1.1);   // a little quicker (Adam: zooming took a long time)
     else if (inside) st.closeTgt = Math.min(1, st.closeTgt + dt / 2.8);      // resting on the work: drift closer
     else st.closeTgt = Math.max(0, st.closeTgt - dt / 2.8);                  // off the work: drift back out at the same pace
     { const w0 = WORKS[idx] || {}, mz = Math.max(1.5, (w0.scan || SCAN_W) * (w0.zoom || 1) / dpr() / hr.width);
@@ -890,13 +890,13 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
     const next = () => { if (i >= urls.length) return; const u = urls[i++], im = new Image();
       im.onload = im.onerror = () => { left[u.lv]--; while (left[ready[k] + 1] === 0) ready[k]++; if (ready[k] + 1 > src.maxLevel - 4 && !(ready[k] + 1 in left)) ready[k] = top; run(); next(); };
       im.src = u.url; };
-    for (let c = 0; c < 4; c++) next();
+    for (let c = 0; c < 6; c++) next();
   }
   const ready = {};
   // deep works: fetch the tiles of the next sharper level around the current view once you get near the limit of the level you have
   const got = new Set(), asked = new Set(), queue = []; let inflight = 0;
   function ask(url) { if (asked.has(url)) return; asked.add(url); queue.push(url); pump(); }
-  function pump() { while (inflight < 4 && queue.length) { const url = queue.shift(), im = new Image(); inflight++;
+  function pump() { while (inflight < 6 && queue.length) { const url = queue.shift(), im = new Image(); inflight++;
     im.onload = im.onerror = () => { inflight--; if (im.naturalWidth) got.add(url); else asked.delete(url); run(); pump(); }; im.src = url; } }
   function deepLevel(k, it, base, width, maxZ) {
     const src = it.source, b = osd.viewport.getBounds(true), now = Math.exp(Math.log(maxZ) * st.close) * width * dpr();
@@ -951,6 +951,9 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
   function wireOne() {
     site.querySelectorAll('a.big').forEach((a, k) => {
       a.addEventListener('click', e => { e.preventDefault(); openStage(a, k); });
+      // resting on a work in the grid starts fetching its close-up detail, so zooming in after opening it doesn't have to wait
+      a.addEventListener('pointerenter', () => { clearTimeout(a._warm); a._warm = setTimeout(() => warm(k), 250); });
+      a.addEventListener('pointerleave', () => clearTimeout(a._warm));
     });
   }
   function fitStage() { const w = WORKS[idx] || {}, s = Math.floor(Math.min(sslot.clientWidth, sslot.clientHeight) * (w.fill && !w.white ? w.fill / 84 : 1)); hold.style.width = hold.style.height = Math.max(120, s) + 'px'; }
