@@ -467,6 +467,11 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
     // "88.4 copy.jpg" (Adam, 2026-11-10): framed grey work photographed on the same wall (7500 px square, wall #ebebeb); size and year not given yet
     { dzi: 'wall12b.dzi', img: 'wall12b-3000.jpg', thumb: 'wall12b-1000.jpg', frame: [0.068, 0.0827, 0.848, 0.836], title: 'Trilogy 1', year: '2010', medium: 'Graphite on paper, hand cut, layered', size: '36 × 38 in',
       alt: 'A large square drawing in a white frame: a dense field of fine grey looping strands, with a soft dark fold running across the middle' },
+    // "older work 8" and "older work 9" (Adam, 2026-11-11): framed colour works, same frame and mat; year and size not given yet (left off the captions until Adam sends them)
+    { dzi: 'wall13.dzi', img: 'wall13-3000.jpg', thumb: 'wall13-1000.jpg', frame: [0.315, 0.239, 0.361, 0.517], title: 'Untitled', year: '', medium: 'Ink, graphite on paper, hand cut, layered', size: '',
+      alt: 'A drawing in a white frame and wide mat: a dense mesh of pale blue and yellow-green cut strands' },
+    { dzi: 'wall14.dzi', img: 'wall14-3000.jpg', thumb: 'wall14-1000.jpg', frame: [0.315, 0.238, 0.363, 0.517], title: 'Untitled', year: '', medium: 'Ink, graphite on paper, hand cut, layered', size: '',
+      alt: 'A drawing in a white frame and wide mat: a dense mesh of golden ochre cut strands over warm brown' },
   ];
   /* the long wall: every work hung at its true size, side by side with equal gaps, centres 57 in above the floor (as in a gallery) */
   const WALL_AR = 2.4, FLOOR = 78;              // wall tile width / height; floor line in % of the tile's height
@@ -502,7 +507,7 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
   if (rest.length) blocks.push([[rest.pop(), 6, 1]]);
   const SHOW = [], SPAN = [], RSPAN = [];   // places on the page, top left to bottom right
   shuffle(blocks).forEach(b => b.forEach(([k, c, r]) => { SHOW.push(k); SPAN.push(c); RSPAN.push(r); }));
-  const cap = w => `<p class="cap"><span class="l1"><i>${w.title}</i>, ${w.year}</span><span class="l2"><span class="md">${w.medium} · </span>${w.size}</span></p>`;
+  const cap = w => `<p class="cap"><span class="l1"><i>${w.title}</i>${w.year ? ', ' + w.year : ''}</span><span class="l2"><span class="md">${w.medium}${w.size ? ' · ' : ''}</span>${w.size}</span></p>`;
   const header = v => `<header class="top chrome"><a href="#">Adam Fowler</a><nav aria-label="Site"><a href="#" ${v === 'home' || v === 'work' || v === 'one' ? 'aria-current="page"' : ''}>drawings</a><a href="#bio" ${v === 'about' ? 'aria-current="page"' : ''}>bio</a></nav></header>`;
   const intro = (area) => `<div class="t wt" style="grid-area:${area}"><div class="fl"></div><div class="txt"><h1>${ARTIST.name}</h1><p class="dt">${ARTIST.born}</p><a class="more" href="#information">Information</a></div></div>`;
   const info = () => `<main class="infopage">
@@ -914,7 +919,7 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
     staging = true;
     const ph = a.querySelector('img.ph'), c0 = rect(a.querySelector('.pic')), p0 = shot(ph);
     const w = WORKS[k];
-    scap.innerHTML = `<i>${w.title}</i><br><span>${w.year} · ${w.medium} · ${w.size}</span>`;
+    scap.innerHTML = `<i>${w.title}</i><br><span>${[w.year, w.medium, w.size].filter(Boolean).join(' · ')}</span>`;
     stage.hidden = false; stage.style.visibility = 'hidden';
     idx = k; sslot.appendChild(hold); fitStage(); done(k, true); window.afTrack?.('open', k, w.title + (w.year ? ', ' + w.year : ''));
     const c1 = { left: 0, top: 0, width: innerWidth, height: innerHeight }, p1 = rect(hold);
