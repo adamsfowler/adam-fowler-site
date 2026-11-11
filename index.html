@@ -149,13 +149,13 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
 .icover { position: fixed; inset: 0; z-index: 14; background: #ebebeb; }
 #site.fading { transition: opacity .32s ease; }
 /* one-page version (#one): resting on a work opens it to the whole window, right there; walk closer works as on a work page */
-#site.one .grid > .big { transform: none !important; box-shadow: none !important; cursor: zoom-in; }
+#site.one .grid > .big { transform: none !important; box-shadow: none !important; cursor: pointer; }
 /* the magnifier: a thin ring that inverts whatever it passes over; + to open a work, − to step back out. It tightens as you walk closer */
 @media (hover: hover) and (pointer: fine) {
 }
-#site.one .grid > .big, #site.one .grid > .big * { cursor: zoom-in !important; }   /* the computer's own magnifier says "click to open" (Adam, 2026-11-11: the drawn ring was hard to see) */
+#site.one .grid > .big, #site.one .grid > .big * { cursor: pointer !important; }   /* the plain pointing hand says "click to open" (Adam, 2026-11-11: no drawn ring, no magnifier) */
 /* an opened work uses the computer's own cursors (Adam, 2026-11-11): a magnifier while you see the whole work, a hand once you are closer and can drag */
-.stage.lensing, .stage.lensing .sslot, .stage.lensing .sslot * { cursor: zoom-in !important; }
+.stage.lensing, .stage.lensing .sslot, .stage.lensing .sslot * { cursor: pointer !important; }
 .stage.lensing.closer, .stage.lensing.closer .sslot, .stage.lensing.closer .sslot * { cursor: grab !important; }
 .stage.lensing.closer.dragging, .stage.lensing.closer.dragging .sslot, .stage.lensing.closer.dragging .sslot * { cursor: grabbing !important; }
 /* clear controls: an Enlarge tag on each work in the grid; Zoom − / + and Close under an opened work */
