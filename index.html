@@ -153,7 +153,10 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
 /* the magnifier: a thin ring that inverts whatever it passes over; + to open a work, − to step back out. It tightens as you walk closer */
 @media (hover: hover) and (pointer: fine) {
 }
-#site.one .grid > .big, #site.one .grid > .big * { cursor: pointer !important; }   /* the plain pointing hand says "click to open" (Adam, 2026-11-11: no drawn ring, no magnifier) */
+#site.one .grid > .big, #site.one .grid > .big * { cursor: pointer !important; }
+/* resting on a work, it grows a little inside its piece of wall, to say it can be opened (Adam, 2026-11-11); same proportions, just a touch larger */
+#site.one .grid > .big img.ph { transition: scale .7s cubic-bezier(.2, .7, .2, 1); }
+@media (hover: hover) { #site.one .grid > .big:hover img.ph { scale: 1.035; } }   /* the plain pointing hand says "click to open" (Adam, 2026-11-11: no drawn ring, no magnifier) */
 /* an opened work uses the computer's own cursors (Adam, 2026-11-11): a magnifier while you see the whole work, a hand once you are closer and can drag */
 .stage.lensing, .stage.lensing .sslot, .stage.lensing .sslot * { cursor: pointer !important; }
 .stage.lensing.closer, .stage.lensing.closer .sslot, .stage.lensing.closer .sslot * { cursor: grab !important; }
