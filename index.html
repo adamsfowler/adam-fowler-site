@@ -36,7 +36,7 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
 .top { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding-block: calc(var(--edge) + 4px) 0; padding-left: max(var(--edge), env(safe-area-inset-left, 0px)); padding-right: max(var(--edge), env(safe-area-inset-right, 0px)); height: 92px; box-sizing: border-box; font-size: 16px; }
 .top nav { display: flex; gap: 22px; }
 .top { background: transparent; align-items: center; height: auto; padding: 8px 0 18px; margin: var(--edge) max(var(--edge), env(safe-area-inset-right, 0px)) 0 max(var(--edge), env(safe-area-inset-left, 0px)); }  /* the name on a band of wall the width of the works, one thin gap above them */
-.top > a:first-child { color: #85857f; font-weight: 200; font-size: clamp(32px, 3.6vw, 60px); line-height: .95; letter-spacing: -.01em; padding-block: 6px 10px; }
+.top > a:first-child { color: #85857f; font-weight: 200; font-size: clamp(16px, 1.8vw, 30px); line-height: .95; letter-spacing: -.01em; padding-block: 6px 10px; }
 .top { align-items: flex-end; }
 .top nav { padding-bottom: 12px; }
 .top + main > .grid.works { padding-top: 0; }   /* the name's band runs straight into the works, no line between */
@@ -789,7 +789,7 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
       walkEl.classList.remove('open');
       Object.assign(walkEl.style, { left: '', top: '', width: '', height: '', background: '' });
     }
-    const chromeO = (1 - smooth(0.02, 0.25, st.close)).toFixed(3);
+    const chromeO = (1 - (opening && opening.z0 ? smooth(0.12 * opening.z0, 0.7 * opening.z0, st.close) : smooth(0.02, 0.25, st.close))).toFixed(3);   // opening: the name and menu fade in while it pulls back
     chrome.forEach(el => el.style.opacity = chromeO);
     backBtn.hidden = st.close < 0.5 || stageOn || staging || !!opening;
     if (stageOn) lens.style.setProperty('--d', ((force || 0) > 0 ? 30 : 38) + 'px');
@@ -961,8 +961,11 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
   const INTRO_OUT = 3.4;   // seconds to pull back (the soft start and landing add about a second)
   async function openingZoom() {
     if (still.matches || !osd) { introDone = true; return; }
+    try { history.scrollRestoration = 'manual'; } catch (e) {}
+    window.scrollTo(0, 0);   // always land at the top of the page (Adam), even if the browser remembers a scrolled position
     const LG = [0, 1, 2, 3, 8, 9, 11], all = [...site.querySelectorAll('a.big')];
-    const onPage = all.map((a, k) => ({ a, k, r: a.getBoundingClientRect() })).filter(o => o.r.top < innerHeight * 0.55 && o.r.width > 0).sort((p, q) => p.r.top - q.r.top || p.r.left - q.r.left);
+    const vis = all.map((a, k) => ({ a, k, r: a.getBoundingClientRect() })).filter(o => o.r.width > 0), top0 = Math.min(...vis.map(o => o.r.top));
+    const onPage = vis.filter(o => o.r.top < top0 + 4).sort((p, q) => p.r.left - q.r.left);   // only the first row
     const pick = onPage.find(o => LG.includes(o.k)) || onPage[0]; if (!pick) return;
     const { a, k } = pick, pic = a.querySelector('.pic'), ph = a.querySelector('img.ph');
     const cover = document.createElement('div'); cover.className = 'icover'; document.body.appendChild(cover);
@@ -979,13 +982,13 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
       // start about a third of the drawing across the window, never closer than the photo allows
       const w = WORKS[k], f = w.frame || [0, 0, 1, 1], maxZ = Math.max(1.5, (w.scan || SCAN_W) * (w.zoom || 1) / dpr() / p.width);
       const z0 = Math.min(0.8, Math.max(0.3, Math.log(3 * Math.max(innerWidth, innerHeight) / f[2] / p.width) / Math.log(maxZ)));
-      st.close = st.mid = st.closeTgt = z0; ph.style.visibility = 'hidden';
+      opening.z0 = z0; st.close = st.mid = st.closeTgt = z0; ph.style.visibility = 'hidden';
       walkEl.style.opacity = 0; run();
       const t0 = performance.now();
       // on a slow connection the closest detail can take a while: start a little further back each second until what is shown is sharp
       let z = z0, tz = t0;
       await waitFor(() => { const now = performance.now();
-        if (!hold.classList.contains('tiles') && now - tz > 1000 && z > 0.12) { z = Math.max(0.12, z * 0.75); st.close = st.mid = st.closeTgt = z; tz = now; run(); }
+        if (!hold.classList.contains('tiles') && now - tz > 1000 && z > 0.12) { z = Math.max(0.12, z * 0.75); opening.z0 = z; st.close = st.mid = st.closeTgt = z; tz = now; run(); }
         return hold.classList.contains('tiles') || now - t0 > 9000; });
       if (!hold.classList.contains('tiles')) { finish(); return; }   // still nothing after 9 s: just show the page
       walkEl.style.transition = 'opacity 1.2s ease'; walkEl.style.opacity = 1;
