@@ -982,8 +982,12 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
       st.close = st.mid = st.closeTgt = z0; ph.style.visibility = 'hidden';
       walkEl.style.opacity = 0; run();
       const t0 = performance.now();
-      await waitFor(() => hold.classList.contains('tiles') || performance.now() - t0 > 5000);
-      if (!hold.classList.contains('tiles')) { finish(); return; }   // too slow to load: just show the page
+      // on a slow connection the closest detail can take a while: start a little further back each second until what is shown is sharp
+      let z = z0, tz = t0;
+      await waitFor(() => { const now = performance.now();
+        if (!hold.classList.contains('tiles') && now - tz > 1000 && z > 0.12) { z = Math.max(0.12, z * 0.75); st.close = st.mid = st.closeTgt = z; tz = now; run(); }
+        return hold.classList.contains('tiles') || now - t0 > 9000; });
+      if (!hold.classList.contains('tiles')) { finish(); return; }   // still nothing after 9 s: just show the page
       walkEl.style.transition = 'opacity 1.2s ease'; walkEl.style.opacity = 1;
       await new Promise(r => setTimeout(r, 1500));
       cover.remove(); opening.go = true; run();
