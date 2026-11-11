@@ -152,8 +152,12 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
 #site.one .grid > .big { transform: none !important; box-shadow: none !important; cursor: zoom-in; }
 /* the magnifier: a thin ring that inverts whatever it passes over; + to open a work, − to step back out. It tightens as you walk closer */
 @media (hover: hover) and (pointer: fine) {
-  #site.one .grid > .big, .stage.lensing, .stage.lensing .sslot, .stage.lensing .sslot * { cursor: none !important; }
+  #site.one .grid > .big { cursor: none !important; }
 }
+/* an opened work uses the computer's own cursors (Adam, 2026-11-11): a magnifier while you see the whole work, a hand once you are closer and can drag */
+.stage.lensing, .stage.lensing .sslot, .stage.lensing .sslot * { cursor: zoom-in !important; }
+.stage.lensing.closer, .stage.lensing.closer .sslot, .stage.lensing.closer .sslot * { cursor: grab !important; }
+.stage.lensing.closer.dragging, .stage.lensing.closer.dragging .sslot, .stage.lensing.closer.dragging .sslot * { cursor: grabbing !important; }
 /* clear controls: an Enlarge tag on each work in the grid; Zoom − / + and Close under an opened work */
 .big .enl { position: absolute; right: 12px; bottom: 12px; display: flex; align-items: center; gap: 8px; font-size: 13px; line-height: 1; padding: 8px 12px 8px 10px; background: rgba(251, 251, 250, .9); color: var(--ink, #2b2b28); opacity: 0; transition: opacity .4s ease; pointer-events: none; }
 .big .enl i { position: relative; width: 9px; height: 9px; }
@@ -222,6 +226,10 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
 .stage .v-tag .tmove { display: none; align-items: center; font: 300 12px/1 var(--jost); letter-spacing: .04em; color: #fff; }   /* brighter, a touch larger: Adam asked for it to read more easily */
 .stage .v-tag .tmove::before { content: ""; width: 1px; height: 12px; background: rgba(255, 255, 255, .28); margin: 0 10px; }
 .stage .v-tag.near .tmove { display: flex; }
+.stage .v-tag .tclose { display: flex; align-items: center; background: none; border: 0; padding: 4px 0; color: #fff; font: 300 12px/1 var(--jost); letter-spacing: .04em; cursor: pointer; }
+.stage .v-tag .tclose::before { content: ""; width: 1px; height: 12px; background: rgba(255, 255, 255, .28); margin: 0 10px; }
+.stage .v-tag .tclose:hover { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
+.stage[data-zc="tag"] .shut { display: none; }   /* Close now lives in the tag (Adam, 2026-11-11); Escape and a click on the bare wall still close too */
 .stage .v-tag.place-up { translate: -50% calc(-100% - 22px); }
 @media (hover: none) { .stage .v-tag { left: 50% !important; top: auto !important; bottom: 74px; translate: -50% 0 !important; opacity: 1; pointer-events: auto; } }
 
@@ -438,7 +446,7 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
   <span class="v-steps"><span class="zt">Far</span><span class="steps"><button type="button" data-z="0" aria-label="Stand back"></button><button type="button" data-z=".25" aria-label="Closer"></button><button type="button" data-z=".5" aria-label="Closer"></button><button type="button" data-z=".75" aria-label="Closer"></button><button type="button" data-z="1" aria-label="As close as you can"></button></span><span class="zt">Near</span></span>
 </div>
 <div class="v-edge" aria-label="Distance"><span class="track edge" data-axis="y"><span class="knob"></span></span><span class="zt">Near</span><span class="zt far">Far</span></div>
-<div class="v-tag" id="ztag"><span class="track" data-axis="x" aria-label="How close"><span class="fillr"></span><span class="knob"></span></span><span class="tmove">drag to move</span></div>
+<div class="v-tag" id="ztag"><span class="track" data-axis="x" aria-label="How close"><span class="fillr"></span><span class="knob"></span></span><span class="tmove">drag to move</span><button type="button" class="tclose" id="tclose">close</button></div>
 <div class="v-hair"><span class="track hair" data-axis="x"><span class="fillr"></span><span class="knob"></span><span class="read zdist"></span></span></div>
 <button type="button" class="shut" id="shut">Close</button></div>
 <div id="scale" hidden></div>
@@ -889,6 +897,19 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
     im.onload = im.onerror = () => { inflight--; if (im.naturalWidth) got.add(url); else asked.delete(url); run(); pump(); }; im.src = url; } }
   function deepLevel(k, it, base, width, maxZ) {
     const src = it.source, b = osd.viewport.getBounds(true), now = Math.exp(Math.log(maxZ) * st.close) * width * dpr();
+    // also fetch, straight away, the detail for the view you are heading to (same centre, closer), so the zoom doesn't stop and wait level by level
+    const goal = Math.max(st.close, stageOn ? force || 0 : 0);
+    if (goal > st.close + 0.01) {
+      const far = Math.exp(Math.log(maxZ) * goal) * width * dpr(), sh = Math.exp(Math.log(maxZ) * (st.close - goal));
+      const g = { x: b.x + b.width * (1 - sh) / 2, y: b.y + b.height * (1 - sh) / 2, width: b.width * sh, height: b.height * sh };
+      for (let L = base + 1; L <= src.maxLevel; L++) {
+        const span = src.dimensions.x * Math.pow(2, L - src.maxLevel); if (far < 0.6 * span / 2) break;
+        const T = src.getTileWidth(L), n = src.getNumTiles(L), m = 0.6;
+        const xa = Math.max(0, Math.floor((g.x - g.width * m) * span / T)), xb = Math.min(n.x - 1, Math.floor((g.x + g.width * (1 + m)) * span / T));
+        const ya = Math.max(0, Math.floor((g.y - g.height * m) * span / T)), yb = Math.min(n.y - 1, Math.floor((g.y + g.height * (1 + m)) * span / T));
+        for (let y = ya; y <= yb; y++) for (let x = xa; x <= xb; x++) ask(src.getTileUrl(L, x, y));
+      }
+    }
     let lvl = base;
     for (let L = base + 1; L <= src.maxLevel; L++) {
       const span = src.dimensions.x * Math.pow(2, L - src.maxLevel);      // this level's width in pixels
@@ -1024,7 +1045,7 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
   function zoomTo(z) { if (!stageOn || staging) return;
     if (z > 0 && (force || 0) <= 0.001) centre();   // stepping in from far always goes to the middle of the work first
     force = Math.min(1, Math.max(0, Math.round(z / 0.005) * 0.005)); window.afTrack?.('zoom', force); away = false; warm(idx); zoomUI(); run(); }
-  function zoomUI() { const z = force || 0; lens.classList.toggle('move', z > 0); lens.classList.toggle('max', z >= 1); if (typeof curState === 'function') curState(); zin.disabled = znear.disabled = z >= 1; zout.disabled = zfar.disabled = z <= 0; stage.style.setProperty('--z', z.toFixed(3));
+  function zoomUI() { const z = force || 0; lens.classList.toggle('move', z > 0); lens.classList.toggle('max', z >= 1); if (typeof curState === 'function') curState(); zin.disabled = znear.disabled = z >= 1; zout.disabled = zfar.disabled = z <= 0; stage.style.setProperty('--z', z.toFixed(3)); stage.classList.toggle('closer', z > 0);
     stage.querySelectorAll('.zdist').forEach(el => el.textContent = distanceText(z));
     stage.querySelectorAll('.steps button').forEach(b => b.classList.toggle('here', Math.abs(+b.dataset.z - z) < 0.13)); }
   const znear = document.getElementById('znear'), zfar = document.getElementById('zfar');
@@ -1068,6 +1089,7 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
     }, 550);
   });
   stage.addEventListener('pointerdown', e => { if (!ztag.contains(e.target)) hideTag(); }, true);
+  document.getElementById('tclose').addEventListener('click', e => { e.stopPropagation(); hideTag(); closeStage(); });
   setInterval(() => ztag.classList.toggle('near', stageOn && (force || 0) > 0.02), 200);
   zin.addEventListener('click', e => { e.stopPropagation(); zoomTo((force || 0) + STEP); });
   zout.addEventListener('click', e => { e.stopPropagation(); zoomTo((force || 0) - STEP); });
@@ -1137,7 +1159,7 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
     const overWork = site.classList.contains('one') && !stageOn && !staging && e.target.closest && e.target.closest('#site a.big');
     const onStage = stageOn && stage.classList.contains('lensing');
     lens.classList.toggle('move', !!(onStage && (force || 0) > 0)); lens.classList.toggle('max', !!(onStage && (force || 0) >= 1));
-    lens.classList.toggle('on', !!(overWork || onStage));
+    lens.classList.toggle('on', !!overWork);
     lens.classList.remove('out');
     if (!onStage) lens.style.setProperty('--d', '38px');
   });
