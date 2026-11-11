@@ -631,6 +631,7 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
   const hold = document.getElementById('hold'), walkEl = document.getElementById('walk'), art = document.getElementById('art');
   const backBtn = document.getElementById('stepBack'), scaleEl = document.getElementById('scale');
   const touch = matchMedia('(hover: none)').matches;
+  const OPENING = false;   // the opening zoom-out: switched off (Adam, 2026-11-11: "taking too long"); set to true to bring it back
   let opening = null, introDone = false;
   let route = { d: 'jost', v: 'home', k: 0 }, slotRO = null, chrome = [];
 
@@ -659,7 +660,7 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
     chrome = [...site.querySelectorAll('.chrome')];
     if (r.v === 'work') mount(r.k);
     if (r.v === 'about') wireContact();
-    if (r.v === 'one') { wireOne(); if (!r.open && !introDone) { introDone = true; openingZoom(); } if (r.open) requestAnimationFrame(() => { const a = site.querySelectorAll('a.big')[r.k]; if (a) { a.scrollIntoView({ block: 'center' }); requestAnimationFrame(() => openStage(a, r.k)); } }); }
+    if (r.v === 'one') { wireOne(); if (OPENING && !r.open && !introDone) { introDone = true; openingZoom(); } if (r.open) requestAnimationFrame(() => { const a = site.querySelectorAll('a.big')[r.k]; if (a) { a.scrollIntoView({ block: 'center' }); requestAnimationFrame(() => openStage(a, r.k)); } }); }
     window.scrollTo(0, 0);
   }
 
