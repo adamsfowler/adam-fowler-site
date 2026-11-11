@@ -152,8 +152,8 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
 #site.one .grid > .big { transform: none !important; box-shadow: none !important; cursor: zoom-in; }
 /* the magnifier: a thin ring that inverts whatever it passes over; + to open a work, − to step back out. It tightens as you walk closer */
 @media (hover: hover) and (pointer: fine) {
-  #site.one .grid > .big { cursor: none !important; }
 }
+#site.one .grid > .big, #site.one .grid > .big * { cursor: zoom-in !important; }   /* the computer's own magnifier says "click to open" (Adam, 2026-11-11: the drawn ring was hard to see) */
 /* an opened work uses the computer's own cursors (Adam, 2026-11-11): a magnifier while you see the whole work, a hand once you are closer and can drag */
 .stage.lensing, .stage.lensing .sslot, .stage.lensing .sslot * { cursor: zoom-in !important; }
 .stage.lensing.closer, .stage.lensing.closer .sslot, .stage.lensing.closer .sslot * { cursor: grab !important; }
@@ -1159,7 +1159,7 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
     const overWork = site.classList.contains('one') && !stageOn && !staging && e.target.closest && e.target.closest('#site a.big');
     const onStage = stageOn && stage.classList.contains('lensing');
     lens.classList.toggle('move', !!(onStage && (force || 0) > 0)); lens.classList.toggle('max', !!(onStage && (force || 0) >= 1));
-    lens.classList.toggle('on', !!overWork);
+    lens.classList.toggle('on', false);   // the drawn ring is retired; native cursors everywhere
     lens.classList.remove('out');
     if (!onStage) lens.style.setProperty('--d', '38px');
   });
