@@ -211,6 +211,20 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
 .stage .hair { position: absolute; inset: 0; width: auto; height: auto; }
 .stage .hair .read { top: 50%; translate: 12px -55%; }
 
+/* Tag (Adam's choice, 2026-11-11): a slim charcoal strip that appears just below the cursor when it rests on the work; the dot is how close you are, tap or drag along the line. Once closer it also says "drag to move" */
+.stage .v-tag { display: none; position: fixed; left: 0; top: 0; z-index: 45; translate: -50% 26px; align-items: center; padding: 3px 14px; border-radius: 20px; background: rgba(48, 48, 45, .84); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); box-shadow: 0 6px 22px rgba(0, 0, 0, .2); color: #f2f2f0; opacity: 0; pointer-events: none; transition: opacity .45s ease; white-space: nowrap; }
+.stage[data-zc="tag"] .v-tag { display: flex; }
+.stage .v-tag.show { opacity: 1; pointer-events: auto; }
+.stage .v-tag .track { width: 120px; height: 16px; }
+.stage .v-tag .track::before { background: rgba(255, 255, 255, .35); }
+.stage .v-tag .fillr { background: #f2f2f0; }
+.stage .v-tag .knob { width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; background: #f2f2f0; border: 0; }
+.stage .v-tag .tmove { display: none; align-items: center; font: 300 12px/1 var(--jost); letter-spacing: .04em; color: #fff; }   /* brighter, a touch larger: Adam asked for it to read more easily */
+.stage .v-tag .tmove::before { content: ""; width: 1px; height: 12px; background: rgba(255, 255, 255, .28); margin: 0 10px; }
+.stage .v-tag.near .tmove { display: flex; }
+.stage .v-tag.place-up { translate: -50% calc(-100% - 22px); }
+@media (hover: none) { .stage .v-tag { left: 50% !important; top: auto !important; bottom: 74px; translate: -50% 0 !important; opacity: 1; pointer-events: auto; } }
+
 .stage .scap { z-index: 30; }
 .lens { position: fixed; left: 0; top: 0; z-index: 40; pointer-events: none; opacity: 0; transition: opacity .35s ease; mix-blend-mode: difference; --d: 38px; }
 .lens.on { opacity: 1; }
@@ -424,6 +438,7 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
   <span class="v-steps"><span class="zt">Far</span><span class="steps"><button type="button" data-z="0" aria-label="Stand back"></button><button type="button" data-z=".25" aria-label="Closer"></button><button type="button" data-z=".5" aria-label="Closer"></button><button type="button" data-z=".75" aria-label="Closer"></button><button type="button" data-z="1" aria-label="As close as you can"></button></span><span class="zt">Near</span></span>
 </div>
 <div class="v-edge" aria-label="Distance"><span class="track edge" data-axis="y"><span class="knob"></span></span><span class="zt">Near</span><span class="zt far">Far</span></div>
+<div class="v-tag" id="ztag"><span class="track" data-axis="x" aria-label="How close"><span class="fillr"></span><span class="knob"></span></span><span class="tmove">drag to move</span></div>
 <div class="v-hair"><span class="track hair" data-axis="x"><span class="fillr"></span><span class="knob"></span><span class="read zdist"></span></span></div>
 <button type="button" class="shut" id="shut">Close</button></div>
 <div id="scale" hidden></div>
@@ -838,7 +853,7 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
       if (on) wasOn = true;
     }
     if (stageOn) {   // on the stage the view no longer follows the pointer: zooming starts at the centre of the work, then you drag to move around
-      const zoomed = (force || 0) > 0, ctl = e.target && e.target.closest && e.target.closest('button, .track, .v-edge, .zoomer, .sbar, .scap, .cpick');
+      const zoomed = (force || 0) > 0, ctl = e.target && e.target.closest && e.target.closest('button, .track, .v-edge, .v-tag, .zoomer, .sbar, .scap, .cpick');
       stage.classList.toggle('lensing', !ctl && (on || zoomed || !!drag)); inside = on && !away && !busy; return; }
     if (!on) { away = false; leave(); return; }
     if (away || busy) return;
@@ -1031,16 +1046,36 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
   // compare the three kinds of zoom control (temporary)
   const setZc = v => { stage.dataset.zc = v; document.querySelectorAll('#zpick button').forEach(b => b.setAttribute('aria-pressed', b.dataset.zc === v)); try { localStorage.setItem('zc', v); } catch (e) {} };
   document.querySelectorAll('#zpick button').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); setZc(b.dataset.zc); }));
-  let zc0 = 'edge';   // Adam chose Edge
-  if (!['line', 'ruler', 'steps', 'edge', 'hair'].includes(zc0)) zc0 = 'line';
+  let zc0 = 'tag';   // Adam chose the slim tag by the cursor (2026-11-11), in place of Edge
+  if (!['line', 'ruler', 'steps', 'edge', 'hair', 'tag'].includes(zc0)) zc0 = 'line';
   setZc(zc0);
+  // the tag comes up just below the cursor once it rests on the work, and goes when the cursor moves well away
+  const ztag = document.getElementById('ztag'); let tagAt = null, tagT = 0;
+  const hideTag = () => { tagAt = null; clearTimeout(tagT); ztag.classList.remove('show'); };
+  document.addEventListener('pointermove', e => {
+    if (!stageOn || staging) { hideTag(); return; }
+    if (e.pointerType !== 'mouse' || ztag.contains(e.target) || ztag.querySelector('.track').hasPointerCapture(e.pointerId)) return;
+    if (tagAt && !drag && Math.hypot(e.clientX - tagAt.x, e.clientY - tagAt.y) < 110) return;
+    hideTag();
+    if (drag || (e.target.closest && e.target.closest('button, .zoomer, .scap, .sbar'))) return;
+    const x = e.clientX, y = e.clientY;
+    tagT = setTimeout(() => {
+      if (!stageOn || drag || !stage.classList.contains('lensing')) return;
+      tagAt = { x, y };
+      ztag.style.left = Math.min(innerWidth - 110, Math.max(110, x)) + 'px'; ztag.style.top = y + 'px';
+      ztag.classList.toggle('place-up', y > innerHeight - 130);
+      ztag.classList.add('show');
+    }, 550);
+  });
+  stage.addEventListener('pointerdown', e => { if (!ztag.contains(e.target)) hideTag(); }, true);
+  setInterval(() => ztag.classList.toggle('near', stageOn && (force || 0) > 0.02), 200);
   zin.addEventListener('click', e => { e.stopPropagation(); zoomTo((force || 0) + STEP); });
   zout.addEventListener('click', e => { e.stopPropagation(); zoomTo((force || 0) - STEP); });
   // drag to move around the work once you are closer
   function centre() { const f = WORKS[idx].frame || [0, 0, 1, 1]; st.fx = st.px = st.x = f[0] + f[2] / 2; st.fy = f[1] + f[3] / 2; st.py = st.y = st.fy * RATIO; }
   const clampF = (v, h, span) => h * 2 >= span ? span / 2 : Math.min(span - h, Math.max(h, v));
   stage.addEventListener('pointerdown', e => {
-    if (!stageOn || staging || (force || 0) <= 0 || e.button > 0 || e.target.closest('button, .track, .v-edge, .zoomer')) return;
+    if (!stageOn || staging || (force || 0) <= 0 || e.button > 0 || e.target.closest('button, .track, .v-edge, .v-tag, .zoomer')) return;
     drag = { x: e.clientX, y: e.clientY, fx: st.x, fy: st.y, moved: false };
     st.fx = st.px = st.x; st.fy = st.y / RATIO; st.py = st.y;
     stage.setPointerCapture(e.pointerId); lens.classList.add('grab'); stage.classList.add('dragging'); run();
@@ -1107,7 +1142,7 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
     if (!onStage) lens.style.setProperty('--d', '38px');
   });
   setInterval(() => { const zoomed = stageOn && st.close > 0.08 && lens.classList.contains('on'); if (zoomed) { if (!sayT) sayT = performance.now(); } else sayT = 0; note.classList.toggle('say', zoomed && !hintSeen && fine.matches); if (zoomed && performance.now() - sayT >= 3500) hintSeen = true; }, 120);   // the words show only the first time, for a few seconds
-  let hintSeen = false;
+  let hintSeen = true;   // the tag now says "drag to move", so the old one-time note stays away
   document.documentElement.addEventListener('mouseleave', () => lens.classList.remove('on'));
 
   new ResizeObserver(() => { if (stageOn) { fitStage(); run(); } }).observe(sslot);
