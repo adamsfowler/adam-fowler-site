@@ -969,6 +969,9 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
   // the drawing itself (inside frame and mat) as fractions of each wall photo, so a close-up never shows the frame
   const INNER = [[.16,.13,.84,.86],[.16,.13,.84,.86],[.16,.13,.84,.86],[.23,.11,.79,.89],[.30,.23,.70,.75],[.30,.23,.70,.75],[.30,.23,.70,.75],[.30,.22,.70,.74],
     [.14,.15,.86,.83],[.14,.15,.86,.83],[.29,.17,.69,.77],[.14,.15,.86,.84],[.31,.24,.675,.75],[.31,.24,.675,.75]];
+  // how many pixels across each photo really holds detail (measured 2026-11-20: finer than this the photo is only enlarged, so softer).
+  // A work gets a close-up only if its photo has real detail to show (Adam): the four small 14 x 11 works (under 3000) never do.
+  const REAL = [7500, 7500, 6000, 4600, 1875, 1875, 2500, 1875, 13000, 5000, 5000, 7500, 3750, 3750];
   const ZOOM_N = 2, ZOOM_OUT_MS = 2200;
   const dziInfo = {};
   const getDzi = k => dziInfo[k] || (dziInfo[k] = fetch(WORKS[k].dzi).then(r => r.text()).then(t => { const g = n => +t.match(new RegExp(n + '="(\\d+)"'))[1];
@@ -986,11 +989,11 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
     const w = WORKS[k], pic = a.querySelector('.pic'), ph = a.querySelector('img.ph'), b = restBox(pic);
     if (!b.d || !INNER[k]) return false;
     const [x0, y0, x1, y1] = INNER[k], m = 0.015, D = dpr();
-    const full = (w.scan || 7500) * (w.zoom && w.zoom < 1 ? 0.5 : 1);           // the softer photo (45 x 32) is not taken as close
-    const Smax = full / (b.d * D);                                              // never closer than the photo's own pixels
+    if (!(REAL[k] >= 3000)) return false;
+    const Smax = REAL[k] / (b.d * D);                                           // as close as the photo's real detail allows, never closer
     const Smin = Math.max(b.pw / b.d / (x1 - x0 - 2 * m), b.ph / b.d / (y1 - y0 - 2 * m), 1.8);   // close enough that only the drawing fills the box
-    if (Smax < Smin * 1.15) return false;
-    const S = Smin * (1.15 + Math.random() * (Math.min(Smax / Smin, 2.8) - 1.15));
+    if (Smax < Smin) return false;
+    const S = Smax;                                                             // as close as possible (Adam)
     const hw = b.pw / b.d / S / 2, hh = b.ph / b.d / S / 2;
     const fx = x0 + m + hw + Math.random() * Math.max(0, x1 - x0 - 2 * m - 2 * hw), fy = y0 + m + hh + Math.random() * Math.max(0, y1 - y0 - 2 * m - 2 * hh);
     const zw = document.createElement('div'); zw.className = 'zw';
@@ -1011,17 +1014,23 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
       if (need > (ph.naturalWidth || 3000)) {
         const info = await getDzi(k); let L = info.maxL;
         while (L > 0 && Math.ceil(info.W / 2 ** (info.maxL - L + 1)) >= need) L--;
-        const lw = Math.ceil(info.W / 2 ** (info.maxL - L)), lh = Math.ceil(info.H / 2 ** (info.maxL - L));
-        const base = w.dzi.replace('.dzi', '_files') + '/' + L + '/';
-        for (let j = 0; j * info.T < lh; j++) for (let i = 0; i * info.T < lw; i++) {
-          const im = new Image(), px = i * info.T - (i ? info.ov : 0), py = j * info.T - (j ? info.ov : 0);
-          zw.appendChild(im);
-          waits.push(loadImg(null, im).then(r => { if (r) Object.assign(im.style, { left: 100 * px / lw + '%', top: 100 * py / lh + '%', width: 100 * im.naturalWidth / lw + '%', height: 100 * im.naturalHeight / lh + '%' }); }));
-          im.src = base + i + '_' + j + '.jpg';
-        }
+        // one level of zoom tiles laid over the photo; only the tiles inside `r` (fractions of the photo) when given
+        const level = (L, r) => { const out = [], lw = Math.ceil(info.W / 2 ** (info.maxL - L)), lh = Math.ceil(info.H / 2 ** (info.maxL - L)), base = w.dzi.replace('.dzi', '_files') + '/' + L + '/';
+          for (let j = 0; j * info.T < lh; j++) for (let i = 0; i * info.T < lw; i++) {
+            if (r && ((i + 1) * info.T < r[0] * lw || i * info.T > r[2] * lw || (j + 1) * info.T < r[1] * lh || j * info.T > r[3] * lh)) continue;
+            const im = new Image(), px = i * info.T - (i ? info.ov : 0), py = j * info.T - (j ? info.ov : 0);
+            const tw = Math.min(info.T + (i ? info.ov : 0) + info.ov, lw - px), th = Math.min(info.T + (j ? info.ov : 0) + info.ov, lh - py);   // the tile's size, known before it arrives
+            Object.assign(im.style, { zIndex: L, left: 100 * px / lw + '%', top: 100 * py / lh + '%', width: 100 * tw / lw + '%', height: 100 * th / lh + '%' }); zw.appendChild(im);
+            out.push(loadImg(null, im));
+            im.src = base + i + '_' + j + '.jpg';
+          }
+          return out; };
+        // the close-up needs only the sharpest tiles it shows; the whole of the softer levels follow quietly, for the pull-back
+        waits.push(...level(L, [fx - hw - 0.02, fy - hh - 0.02, fx + hw + 0.02, fy + hh + 0.02]));
+        z.later = () => { for (let M = L - 1; M > 0 && Math.ceil(info.W / 2 ** (info.maxL - M)) > (ph.naturalWidth || 3000); M--) level(M); };
       }
       await Promise.all(waits);
-      if (a._z === z) { await frame(); zw.classList.add('on'); }
+      if (a._z === z) { await frame(); zw.classList.add('on'); if (z.later) z.later(); }
     })();
     z.out = async () => {
       if (z.busy) return; z.busy = true;
