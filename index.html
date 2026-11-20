@@ -429,6 +429,13 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
 .grid.works.mixed { --cols: 6; grid-auto-rows: auto; }
 .grid.works.mixed > .big { grid-column: span var(--span, 3); grid-row: span var(--rspan, 1); aspect-ratio: 1 / 1; }
 .grid.works.mixed > .big.lg { aspect-ratio: auto; }   /* a large work beside two smaller ones: two rows tall, so still square (Adam's reference) */
+/* (Adam, 2026-11-20): works that start close up inside their box; a click pulls back to the whole work */
+.zw { position: absolute; opacity: 0; transition: opacity 1.4s ease; }
+.zw.on { opacity: 1; }
+.zw img { position: absolute; display: block; max-width: none; user-select: none; -webkit-user-drag: none; }
+.zw img.ph { left: 0 !important; top: 0 !important; width: 100% !important; height: 100% !important; translate: none !important; }
+.grid > .big.zin:hover, .grid > .big.zin:focus-visible { transform: none !important; box-shadow: none !important; }
+.grid > .big.zin .cap { opacity: 0 !important; }
 @media (max-width: 760px) { .grid.works.mixed { --cols: 1; } .grid.works.mixed > .big { grid-column: auto; grid-row: auto; } .grid.works.mixed > .big.lg { aspect-ratio: 1 / 1; } }
 </style>
 
@@ -951,11 +958,80 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
   let stageOn = false, staging = false, wasOn = false, closeArmed = false, homeChrome = [];
   function wireOne() {
     site.querySelectorAll('a.big').forEach((a, k) => {
-      a.addEventListener('click', e => { e.preventDefault(); openStage(a, k); });
+      a.addEventListener('click', e => { e.preventDefault(); if (a._z) { a._z.out(); return; } openStage(a, k); });
       // resting on a work in the grid starts fetching its close-up detail, so zooming in after opening it doesn't have to wait
       a.addEventListener('pointerenter', () => { clearTimeout(a._warm); a._warm = setTimeout(() => warm(k), 250); });
       a.addEventListener('pointerleave', () => clearTimeout(a._warm));
     });
+    if (!parse().open) zoomStart();
+  }
+  /* ---------- (Adam, 2026-11-20): on each visit a few works, chosen at random, start close up inside their box; a click pulls back to the whole work ---------- */
+  // the drawing itself (inside frame and mat) as fractions of each wall photo, so a close-up never shows the frame
+  const INNER = [[.16,.13,.84,.86],[.16,.13,.84,.86],[.16,.13,.84,.86],[.23,.11,.79,.89],[.30,.23,.70,.75],[.30,.23,.70,.75],[.30,.23,.70,.75],[.30,.22,.70,.74],
+    [.14,.15,.86,.83],[.14,.15,.86,.83],[.29,.17,.69,.77],[.14,.15,.86,.84],[.31,.24,.675,.75],[.31,.24,.675,.75]];
+  const ZOOM_N = 4, ZOOM_OUT_MS = 2200;
+  const dziInfo = {};
+  const getDzi = k => dziInfo[k] || (dziInfo[k] = fetch(WORKS[k].dzi).then(r => r.text()).then(t => { const g = n => +t.match(new RegExp(n + '="(\\d+)"'))[1];
+    const W = g('Width'), H = g('Height'); return { W, H, T: g('TileSize'), ov: g('Overlap'), maxL: Math.ceil(Math.log2(Math.max(W, H))) }; }));
+  const loadImg = (src, el) => new Promise(res => { const im = el || new Image(); im.onload = () => (im.decode ? im.decode().catch(() => {}) : Promise.resolve()).then(() => res(im)); im.onerror = () => res(null); if (!el) im.src = src; else if (im.complete && im.naturalWidth) im.onload(); });
+  function zoomStart() {
+    if (still.matches) return;
+    const all = [...site.querySelectorAll('a.big')];
+    let n = 0;
+    for (const k of shuffle(all.map((a, i) => i))) { if (n >= ZOOM_N) break; if (zoomOne(all[k], k)) n++; }
+  }
+  // the photo's square as the page draws it inside a box (84% of the box, centred a little high), from the box's own size
+  const restBox = pic => { const pw = pic.clientWidth, ph = pic.clientHeight, d = 0.84 * Math.min(pw, ph); return { pw, ph, x: 0.505 * pw - d / 2, y: 0.48 * ph - d / 2, d }; };
+  function zoomOne(a, k) {
+    const w = WORKS[k], pic = a.querySelector('.pic'), ph = a.querySelector('img.ph'), b = restBox(pic);
+    if (!b.d || !INNER[k]) return false;
+    const [x0, y0, x1, y1] = INNER[k], m = 0.015, D = dpr();
+    const full = (w.scan || 7500) * (w.zoom && w.zoom < 1 ? 0.5 : 1);           // the softer photo (45 x 32) is not taken as close
+    const Smax = full / (b.d * D);                                              // never closer than the photo's own pixels
+    const Smin = Math.max(b.pw / b.d / (x1 - x0 - 2 * m), b.ph / b.d / (y1 - y0 - 2 * m), 1.8);   // close enough that only the drawing fills the box
+    if (Smax < Smin * 1.15) return false;
+    const S = Smin * (1.15 + Math.random() * (Math.min(Smax / Smin, 2.8) - 1.15));
+    const hw = b.pw / b.d / S / 2, hh = b.ph / b.d / S / 2;
+    const fx = x0 + m + hw + Math.random() * Math.max(0, x1 - x0 - 2 * m - 2 * hw), fy = y0 + m + hh + Math.random() * Math.max(0, y1 - y0 - 2 * m - 2 * hh);
+    const zw = document.createElement('div'); zw.className = 'zw';
+    const oldStyle = ph.getAttribute('style'); ph.loading = 'eager';
+    pic.appendChild(zw); zw.appendChild(ph); a.classList.add('zin');
+    // place the photo at scale s: a straight zoom about one fixed point, from the close-up (s = S, the chosen spot in the box's centre) to the whole work (s = 1)
+    const z = { s: S, busy: false };
+    const lay = () => { const r = restBox(pic), u = (z.s - 1) / (S - 1), lS = r.pw / 2 - fx * r.d * S, tS = r.ph / 2 - fy * r.d * S;
+      Object.assign(zw.style, { left: (r.x + u * (lS - r.x)) + 'px', top: (r.y + u * (tS - r.y)) + 'px', width: r.d * z.s + 'px', height: r.d * z.s + 'px' }); };
+    lay();
+    const ro = new ResizeObserver(() => { if (!z.busy) lay(); }); ro.observe(pic);
+    const restore = () => { ro.disconnect(); pic.appendChild(ph); if (oldStyle === null) ph.removeAttribute('style'); else ph.setAttribute('style', oldStyle); zw.remove(); a._z = null;
+      if (a.matches(':hover')) a.addEventListener('pointerleave', () => a.classList.remove('zin'), { once: true }); else a.classList.remove('zin'); };
+    // sharper detail from the zoom tiles where the 3000 px photo would have to be enlarged; nothing is shown until it is all here, so the close-up is never soft
+    const shown = (async () => {
+      const waits = [loadImg(null, ph)];
+      const need = b.d * S * D;
+      if (need > (ph.naturalWidth || 3000)) {
+        const info = await getDzi(k); let L = info.maxL;
+        while (L > 0 && Math.ceil(info.W / 2 ** (info.maxL - L + 1)) >= need) L--;
+        const lw = Math.ceil(info.W / 2 ** (info.maxL - L)), lh = Math.ceil(info.H / 2 ** (info.maxL - L));
+        const base = w.dzi.replace('.dzi', '_files') + '/' + L + '/';
+        for (let j = 0; j * info.T < lh; j++) for (let i = 0; i * info.T < lw; i++) {
+          const im = new Image(), px = i * info.T - (i ? info.ov : 0), py = j * info.T - (j ? info.ov : 0);
+          zw.appendChild(im);
+          waits.push(loadImg(null, im).then(r => { if (r) Object.assign(im.style, { left: 100 * px / lw + '%', top: 100 * py / lh + '%', width: 100 * im.naturalWidth / lw + '%', height: 100 * im.naturalHeight / lh + '%' }); }));
+          im.src = base + i + '_' + j + '.jpg';
+        }
+      }
+      await Promise.all(waits);
+      if (a._z === z) { await frame(); zw.classList.add('on'); }
+    })();
+    z.out = async () => {
+      if (z.busy) return; z.busy = true;
+      if (!zw.classList.contains('on')) { restore(); return; }                  // not shown yet: simply show the whole work
+      const lS = Math.log(S);
+      await anim(ZOOM_OUT_MS, x => { z.s = Math.exp(lS * (1 - glide(x))); lay(); });
+      z.s = 1; lay(); await frame(); restore();
+    };
+    a._z = z;
+    return true;
   }
   function fitStage() { const w = WORKS[idx] || {}, s = Math.floor(Math.min(sslot.clientWidth, sslot.clientHeight) * (w.fill && !w.white ? w.fill / 84 : 1)); hold.style.width = hold.style.height = Math.max(120, s) + 'px'; }
   async function openStage(a, k) {
