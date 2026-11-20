@@ -969,7 +969,7 @@ a:focus-visible, button:focus-visible { outline: 1px solid var(--ink); outline-o
   // the drawing itself (inside frame and mat) as fractions of each wall photo, so a close-up never shows the frame
   const INNER = [[.16,.13,.84,.86],[.16,.13,.84,.86],[.16,.13,.84,.86],[.23,.11,.79,.89],[.30,.23,.70,.75],[.30,.23,.70,.75],[.30,.23,.70,.75],[.30,.22,.70,.74],
     [.14,.15,.86,.83],[.14,.15,.86,.83],[.29,.17,.69,.77],[.14,.15,.86,.84],[.31,.24,.675,.75],[.31,.24,.675,.75]];
-  const ZOOM_N = 4, ZOOM_OUT_MS = 2200;
+  const ZOOM_N = 2, ZOOM_OUT_MS = 2200;
   const dziInfo = {};
   const getDzi = k => dziInfo[k] || (dziInfo[k] = fetch(WORKS[k].dzi).then(r => r.text()).then(t => { const g = n => +t.match(new RegExp(n + '="(\\d+)"'))[1];
     const W = g('Width'), H = g('Height'); return { W, H, T: g('TileSize'), ov: g('Overlap'), maxL: Math.ceil(Math.log2(Math.max(W, H))) }; }));
