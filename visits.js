@@ -1,7 +1,8 @@
 /* Adam Fowler – the website's statistics, counted anonymously (read on stats.html).
    Pages seen and for how long; which works were opened, how long they were looked at and how close people went; links out.
    A visitor is an anonymous number kept in this browser; a visit ends after half an hour away. Cloudflare adds roughly
-   where they are and whose network it is; no address is kept. index.html calls window.afTrack(...) at the moments that matter. */
+   where they are (city and its rough coordinates) and whose network it is; the worker keeps the browser's name, its language and
+   the screen size, never the address or the full browser description. index.html calls window.afTrack(...) at the moments that matter. */
 (function () {
   if (window.afTrack) return;
   var on = /(^|\.)adamfowler\.com$/.test(location.hostname);
@@ -24,10 +25,20 @@
         /soniadutton/.test(h) ? 'dutton' : /artsy/.test(h) ? 'artsy' : h; } catch (e) { src = 'direct'; } }
     ss('af-src', src);
   }
+  // where this visit started: the linking page (address without its ?query), the campaign tag, and the address it landed on
+  var ref = ss('af-ref'), camp = ss('af-camp'), land = ss('af-land');
+  if (ref === null || fresh) {
+    try { var r = new URL(document.referrer); ref = /adamfowler\.com$/.test(r.hostname) ? '' : (r.hostname.replace(/^www\./, '') + r.pathname).replace(/\/$/, '').slice(0, 200); } catch (e) { ref = ''; }
+    var q = new URLSearchParams(location.search);
+    camp = [q.get('utm_campaign'), q.get('utm_medium')].filter(Boolean).join(' / ').slice(0, 80);
+    land = (location.pathname + location.hash).slice(0, 120);
+    ss('af-ref', ref); ss('af-camp', camp); ss('af-land', land);
+  }
+  var scr = screen.width && screen.height ? Math.round(screen.width) + 'x' + Math.round(screen.height) : '';
   var dev = matchMedia('(pointer: coarse)').matches ? (Math.min(screen.width, screen.height) >= 700 ? 'tablet' : 'phone') : 'desktop';
   var send = function (o) {
     if (!on) return;
-    o.pid = pid; o.sid = sid; o.src = src; o.dev = dev; touch();
+    o.pid = pid; o.sid = sid; o.src = src; o.dev = dev; o.scr = scr; if (ref) o.ref = ref; if (camp) o.camp = camp; if (land) o.land = land; touch();
     var body = JSON.stringify(o);
     try { if (navigator.sendBeacon && navigator.sendBeacon('/api/hit', new Blob([body], { type: 'text/plain' }))) return; } catch (e) { }
     try { fetch('/api/hit', { method: 'POST', body: body, keepalive: true, headers: { 'Content-Type': 'text/plain' } }); } catch (e) { }

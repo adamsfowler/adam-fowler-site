@@ -7,6 +7,9 @@
 <title>Statistics · Adam Fowler</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22%3E%3Crect width=%2216%22 height=%2216%22 fill=%22%23ebebeb%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
 <style>
 /* Adam's private statistics page: who came to the site, what they looked at, and the contact form's messages.
    Same quiet look as the site: Jost, thin, greys. Not linked from the site and kept out of search engines. */
@@ -20,9 +23,9 @@ h2 { font-weight: 300; font-size: 13px; letter-spacing: .12em; text-transform: u
 a { color: inherit; }
 button { font: inherit; color: var(--ink); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
 .row { display: flex; flex-wrap: wrap; gap: 10px 26px; align-items: baseline; color: var(--muted); font-size: 13px; }
-.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); margin-top: 28px; }
+.kpis { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); margin-top: 28px; }
 .kpi { background: var(--page); padding: 16px 18px; }
-.kpi b { display: block; font-weight: 200; font-size: 32px; line-height: 1.1; }
+.kpi b { display: block; font-weight: 200; font-size: 30px; line-height: 1.1; white-space: nowrap; }
 .kpi span { color: var(--muted); font-size: 13px; }
 table { width: 100%; border-collapse: collapse; font-size: 14px; }
 th { text-align: left; font-weight: 300; color: var(--muted); font-size: 12px; letter-spacing: .04em; padding: 6px 10px 6px 0; border-bottom: 1px solid var(--line); }
@@ -50,6 +53,27 @@ td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; white-space:
 form.key { margin-top: 40px; display: flex; gap: 14px; align-items: baseline; flex-wrap: wrap; }
 form.key input { font: inherit; color: var(--ink); background: transparent; border: 0; border-bottom: 1px solid #c9c9c5; padding: 4px 0 6px; min-width: 260px; outline: none; }
 #err { color: #a0574a; }
+
+.range { display: flex; flex-wrap: wrap; gap: 4px 18px; margin-top: 22px; font-size: 14px; color: var(--muted); }
+.range button { color: var(--muted); text-decoration: none; }
+.range button.on { color: var(--ink); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 6px; }
+#map { height: 460px; background: #f1f1ef; border: 1px solid var(--line); }
+@media (max-width: 720px) { #map { height: 320px; } }
+.leaflet-container { font: 300 13px/1.45 'Jost', system-ui, sans-serif; background: #f1f1ef; }
+.leaflet-interactive:focus { outline: none; }
+.leaflet-popup-content-wrapper, .leaflet-popup-tip { border-radius: 2px; box-shadow: 0 2px 10px rgba(0,0,0,.12); }
+.leaflet-popup-content { margin: 10px 14px; color: var(--ink); }
+.leaflet-popup-content b { font-weight: 400; font-size: 14px; }
+.leaflet-popup-content .sub { font-size: 12px; margin: 2px 0 0; }
+.leaflet-tooltip { font: 300 12px 'Jost', system-ui, sans-serif; border-radius: 2px; }
+.note { color: var(--muted); font-size: 13px; margin-top: 8px; }
+.daily td:first-child { white-space: nowrap; }
+.daily tr.today td { color: var(--ink); font-weight: 400; }
+.daily tr.zero td { color: #b3b3ad; }
+.visit .head span + span::before { content: ' · '; }
+.visit .more { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.bars.long { gap: 1px; }
+@media (max-width: 720px) { .kpis { grid-template-columns: repeat(2, 1fr); } }
 </style>
 </head>
 <body>
@@ -74,7 +98,7 @@ function ask(msg) {
 async function load() {
   if (!key) return ask();
   out.innerHTML = '<p class="sub" style="margin-top:40px">Loading…</p>';
-  let r, d; try { r = await fetch('/api/stats', { cache: 'no-store', headers: { Authorization: 'Bearer ' + key } }); d = await r.json(); } catch (e) { return ask('Could not reach the site’s server.'); }
+  let r, d; try { r = await fetch('/api/stats' + (range ? '?range=' + range : ''), { cache: 'no-store', headers: { Authorization: 'Bearer ' + key } }); d = await r.json(); } catch (e) { return ask('Could not reach the site’s server.'); }
   if (r.status === 401) { try { sessionStorage.removeItem('af-stats-key'); } catch (e) { } ls('af-stats-key', null); key = ''; return ask(d.error === 'no password set yet' ? 'No password has been set in Cloudflare yet.' : 'That password didn’t work.'); }
   show(d);
 }
@@ -82,32 +106,116 @@ const table = (cols, rows, empty = 'Nothing yet.') => !rows.length ? `<p class="
   `<table><tr>${cols.map(c => `<th class="${c.n ? 'n' : ''} ${c.s ? 'hide-s' : ''}">${c.h}</th>`).join('')}</tr>${rows.map(r => `<tr>${cols.map(c => `<td class="${c.n ? 'n' : ''} ${c.s ? 'hide-s' : ''}">${c.f(r)}</td>`).join('')}</tr>`).join('')}</table>`;
 const meter = (v, max) => `<span class="meter" style="width:${Math.max(2, Math.round(60 * (v || 0) / Math.max(max, 1)))}px"></span>`;
 
+const cname = (() => { try { const n = new Intl.DisplayNames(['en'], { type: 'region' }); return c => { try { return c ? n.of(c) : ''; } catch (e) { return c; } }; } catch (e) { return c => c; } })();
+const lname = (() => { try { const n = new Intl.DisplayNames(['en'], { type: 'language' }); return c => { try { return c ? n.of(c) : ''; } catch (e) { return c; } }; } catch (e) { return c => c; } })();
+const dayName = k => new Date(k + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
+const nyDay = t => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(t);
+const placeName = c => [c.city, c.region, cname(c.country)].filter(Boolean).join(', ');
+// Rough centres for the places recorded before the site kept coordinates (Nov 2026); newer visits bring their own.
+const GEO = { 'US|Arizona|Phoenix': [33.45, -112.07], 'US|New York|New York City': [40.71, -74.01], 'US|Virginia|Ashburn': [39.04, -77.49], 'US|Texas|Dallas': [32.78, -96.8],
+  'GB|England|Ipswich': [52.06, 1.16], 'US|California|San Jose': [37.34, -121.89], 'US|California|Santa Clara': [37.35, -121.96], 'US|New York|Farmingdale': [40.73, -73.45],
+  'US|Virginia|Floris': [38.94, -77.42], 'BR|Rio de Janeiro|Niterói': [-22.88, -43.1], 'CA|Quebec|Montréal': [45.5, -73.57], 'FI|Uusimaa|Helsinki': [60.17, 24.94],
+  'FR|Hauts-de-France|Lille': [50.63, 3.06], 'KR|Gyeonggi-do|Anyang-si': [37.39, 126.96], 'US|California|Mountain View': [37.39, -122.08], 'US|Florida|Cape Coral': [26.56, -81.95],
+  'US|Iowa|Council Bluffs': [41.26, -95.86], 'US|Oregon|Prineville': [44.3, -120.83], 'US|South Carolina|Simpsonville': [34.74, -82.25] };
+// networks that belong to robots and data centres rather than people
+const ROBOT = /crawler|ahrefs|semrush|google llc|amazon|microsoft|facebook|meta platforms|digitalocean|ovh|hetzner|linode|akamai|cloudflare|oracle|alibaba|tencent|censys|bytedance/i;
+let range = +(ls('af-stats-range') || 0), map = null, showAllDays = false;
+const RANGES = [[1, 'Today'], [7, '7 days'], [30, '30 days'], [90, '90 days'], [0, 'All time']];
+
+// world outlines (Natural Earth via world-atlas), drawn by the page itself: no map service or key needed
+const ISO = 'AE784AF004AL008AM051AO024AQ010AR032AT040AU036AZ031BA070BD050BE056BF854BG100BI108BJ204BN096BO068BR076BS044BT064BW072BY112BZ084CA124CD180CF140CG178CH756CI384CL152CM120CN156CO170CR188CU192CY196CZ203DE276DJ262DK208DO214DZ012EC218EE233EG818EH732ER232ES724ET231FI246FJ242FK238FR250GA266GB826GE268GH288GL304GM270GN324GQ226GR300GT320GW624GY328HN340HR191HT332HU348ID360IE372IL376IN356IQ368IR364IS352IT380JM388JO400JP392KE404KG417KH116KP408KR410KW414KZ398LA418LB422LK144LR430LS426LT440LU442LV428LY434MA504MD498ME499MG450MK807ML466MM104MN496MR478MW454MX484MY458MZ508NA516NC540NE562NG566NI558NL528NO578NP524NZ554OM512PA591PE604PG598PH608PK586PL616PR630PS275PT620PY600QA634RO642RS688RU643RW646SA682SB090SD729SE752SI705SK703SL694SN686SO706SR740SS728SV222SY760SZ748TD148TF260TG768TH764TJ762TL626TM795TN788TR792TT780TW158TZ834UA804UG800US840UY858UZ860VE862VN704VU548YE887ZA710ZM894ZW716';
+const NUM = {}; for (let i = 0; i < ISO.length; i += 5) NUM[ISO.slice(i + 2, i + 5)] = ISO.slice(i, i + 2);
+let atlas = null;
+async function world() {
+  if (atlas) return atlas;
+  const t = await (await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json')).json();
+  atlas = topojson.feature(t, t.objects.countries);
+  atlas.features = atlas.features.filter(f => f.id !== '010');   // no Antarctica
+  // rings that cross the date line (Russia, Fiji) are unwrapped so they don't draw a band across the map
+  const unwrap = ring => { for (let i = 1; i < ring.length; i++) { const dx = ring[i][0] - ring[i - 1][0]; if (dx > 180) ring[i] = [ring[i][0] - 360, ring[i][1]]; else if (dx < -180) ring[i] = [ring[i][0] + 360, ring[i][1]]; } };
+  atlas.features.forEach(f => { const g = f.geometry; if (!g) return; (g.type === 'Polygon' ? [g.coordinates] : g.coordinates).forEach(poly => poly.forEach(unwrap)); });
+  atlas.features.forEach(f => { f.properties.cc = NUM[f.id] || (f.properties.name === 'Kosovo' ? 'XK' : ''); });
+  return atlas;
+}
+async function drawMap(d) {
+  const el = $('#map'); if (!el) return;
+  if (map) { map.remove(); map = null; }
+  if (!window.L || !window.topojson) { el.innerHTML = '<p class="empty" style="padding:16px">The map could not load.</p>'; return; }
+  map = L.map(el, { scrollWheelZoom: false, worldCopyJump: false, minZoom: 0, maxZoom: 8, zoomSnap: 0.25, attributionControl: true }).setView([30, -20], 1.5);
+  map.attributionControl.setPrefix(false).addAttribution('Outlines: Natural Earth');
+  const byC = Object.fromEntries(d.countries.map(c => [c.country, c])), cmax = Math.max(1, ...d.countries.map(c => c.visitors));
+  const shade = n => !n ? '#e4e4e0' : ['#d3d3ce', '#c2c2bc', '#adada6', '#97978f', '#83837b'][Math.min(4, Math.floor(5 * Math.log(1 + n) / Math.log(1 + cmax + 1e-9)))];
+  try {
+    const w = await world();
+    if (!map) return;
+    L.geoJSON(w, { style: f => ({ color: '#f8f8f7', weight: 0.7, fillColor: shade(byC[f.properties.cc]?.visitors), fillOpacity: 1 }),
+      onEachFeature: (f, layer) => { const c = byC[f.properties.cc]; layer.bindTooltip(`${esc(cname(f.properties.cc) || f.properties.name)}${c ? ` · ${c.visitors} visitor${c.visitors === 1 ? '' : 's'}` : ''}`, { sticky: true }); } }).addTo(map);
+  } catch (e) { $('#mapnote').textContent = 'The country outlines could not load.'; }
+  const pts = d.places.map(p => { const g = p.lat != null && p.lon != null ? [p.lat, p.lon] : GEO[[p.country, p.region, p.city].join('|')]; return g ? { ...p, g } : null; }).filter(Boolean);
+  const max = Math.max(1, ...pts.map(p => p.visitors));
+  pts.sort((a, b) => b.visitors - a.visitors).forEach(p => {
+    const robot = p.orgs && p.orgs.split(',').every(o => ROBOT.test(o));
+    const recent = Date.now() - Date.parse(p.last) < 864e5;
+    const m = L.circleMarker(p.g, { radius: 4 + 13 * Math.sqrt(p.visitors / max), color: '#f8f8f7', weight: 1,
+      fillColor: robot ? '#b9b9b3' : recent ? '#1f1f1d' : '#4a4a45', fillOpacity: robot ? .7 : .78 }).addTo(map);
+    m.bindTooltip(`${esc(p.city || cname(p.country))} · ${p.visitors}`, { direction: 'top', offset: [0, -4] });
+    m.bindPopup(`<b>${esc(placeName(p) || 'Somewhere')}</b>
+      <p>${fmt(p.visitors)} visitor${p.visitors === 1 ? '' : 's'} · ${fmt(p.visits)} visit${p.visits === 1 ? '' : 's'}${p.opens ? ` · ${fmt(p.opens)} work${p.opens === 1 ? '' : 's'} opened` : ''}</p>
+      <p class="sub">Last ${esc(when(p.last))}${p.first !== p.last ? ` · first ${esc(when(p.first))}` : ''}</p>
+      ${p.orgs ? `<p class="sub">${esc(p.orgs.split(',').slice(0, 4).join(' · '))}${robot ? ' (data centre, probably a robot)' : ''}</p>` : ''}`);
+  });
+  if (pts.length > 1) map.fitBounds(L.latLngBounds(pts.map(p => p.g)).pad(0.12), { maxZoom: 5 }); else if (pts.length) map.setView(pts[0].g, 4); else map.setView([30, -20], 1.5);
+  const nc = d.countries.length, placed = pts.reduce((a, p) => a + p.visitors, 0), all = d.places.reduce((a, p) => a + p.visitors, 0);
+  $('#mapnote').textContent = d.countries.length ? `${fmt(pts.length)} place${pts.length === 1 ? '' : 's'} in ${fmt(nc)} countr${nc === 1 ? 'y' : 'ies'}. Darker countries had more visitors; bigger dots mean more visitors from that town, the darkest had someone in the last day, and pale dots are data centres (usually robots). Click a dot for details, or zoom in with + and −.${all > placed ? ` ${all - placed} visitor${all - placed === 1 ? '' : 's'} from towns without a known position show only in their country's shade.` : ''}` : 'No places yet.';
+}
+
+async function downloadCsv() {
+  const r = await fetch('/api/daily.csv', { cache: 'no-store', headers: { Authorization: 'Bearer ' + key } });
+  if (!r.ok) return alert('The spreadsheet could not be made: the server needs the latest update.');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(await r.blob()); a.download = `adamfowler-daily-${nyDay(new Date())}.csv`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+
 function show(d) {
   const counted = !ls('af-not-counted');
   const unread = d.messages.filter(m => m.unread).length;
-  // the last 30 days, oldest at the left
-  const byDay = Object.fromEntries(d.days.map(x => [x.day, x])), days = [];
-  for (let i = 29; i >= 0; i--) { const t = new Date(Date.now() - i * 864e5), k = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(t); days.push({ k, v: byDay[k]?.visitors || 0, o: byDay[k]?.opens || 0 }); }
-  const dmax = Math.max(1, ...days.map(x => x.v));
+  const label = RANGES.find(r => r[0] === (d.range || 0))?.[1] || 'All time';
+  const today = d.today || nyDay(new Date());
+  // day-by-day, every day from the first visit to today (days with no visitors included), newest first
+  const byDay = Object.fromEntries((d.days || []).map(x => [x.day, x])), allDays = [];
+  const start = d.first || today;
+  for (let t = Date.parse(today + 'T12:00:00Z'); ; t -= 864e5) { const k = new Date(t).toISOString().slice(0, 10); allDays.push(byDay[k] || { day: k, visitors: 0, visits: 0, views: 0, opens: 0, newv: 0, secs: 0, countries: 0 }); if (k <= start || allDays.length > 3700) break; }
+  const span = Math.min(allDays.length, 3700), chartN = Math.max(30, d.range === 90 ? 90 : !d.range ? Math.min(span, 365) : 30);
+  const chart = []; for (let i = chartN - 1; i >= 0; i--) { const t = new Date(Date.parse(today + 'T12:00:00Z') - i * 864e5).toISOString().slice(0, 10); chart.push(byDay[t] || { day: t, visitors: 0, opens: 0, newv: 0 }); }
+  const dmax = Math.max(1, ...chart.map(x => x.visitors));
   const wmax = Math.max(1, ...d.works.map(w => w.visitors));
   const smax = Math.max(1, ...d.sources.map(s => s.visitors));
   const hmax = Math.max(1, ...d.hours.map(h => h.visitors)), hours = Array.from({ length: 24 }, (_, h) => d.hours.find(x => x.hour === h)?.visitors || 0);
+  const wds = [1, 2, 3, 4, 5, 6, 0].map(w => ({ name: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][w], visitors: (d.weekdays || []).find(x => x.wd === w)?.visitors || 0 }));
+  const wdmax = Math.max(1, ...wds.map(x => x.visitors));
+  const best = allDays.reduce((b, x) => x.visitors > (b?.visitors || 0) ? x : b, null);
+  const avg7 = allDays.slice(0, 7).reduce((a, x) => a + x.visitors, 0) / Math.min(7, allDays.length);
   // the latest visits, each as the list of what it did
   const visits = []; const bySid = {};
-  d.recent.forEach(e => { let v = bySid[e.sid]; if (!v) { v = bySid[e.sid] = { first: e, last: e, steps: [] }; visits.push(v); } v.last = e;
+  d.recent.forEach(e => { let v = bySid[e.sid]; if (!v) { v = bySid[e.sid] = { first: e, last: e, steps: [], ms: 0 }; visits.push(v); } v.last = e;
+    if (e.ev === 'time' || e.ev === 'look') v.ms += e.v || 0;
+    for (const f of ['browser', 'os', 'lang', 'scr', 'ref', 'camp', 'land', 'tz']) if (!v.first[f] && e[f]) v.first = { ...v.first, [f]: e[f] };
     if (e.ev === 'view') v.steps.push(e.page === 'bio' ? 'read the bio' : 'looked at the drawings');
     else if (e.ev === 'look') v.steps.push(`looked at <i>${esc(e.label || 'work ' + (e.work + 1))}</i> for ${secs(e.v / 1000)}${e.z > 0 ? ', zoomed ' + Math.round(e.z * 100) + '% of the way in' : ''}`);
     else if (e.ev === 'out') v.steps.push('followed a link to ' + esc(e.k));
     else if (e.ev === 'contact') v.steps.push('sent a message'); });
   visits.reverse();
+  const small = (title, rows, col, name = x => esc(x[col])) => `<div><h2>${title}</h2>${table([{ h: '', f: name }, { h: 'Visitors', n: 1, f: x => fmt(x.visitors) }], rows || [], 'Nothing yet. Counted from the November 2026 update on.')}</div>`;
+  const dayRows = showAllDays ? allDays : allDays.slice(0, 14);
 
   out.innerHTML = `
   <div class="row" style="margin-top:14px">
     <span>${counted ? 'This browser is counted.' : 'This browser is not counted.'} <button id="nc">${counted ? 'Don’t count this browser' : 'Count it again'}</button></span>
     <button id="rl">Refresh</button>
   </div>
+  <div class="range" id="range">${RANGES.map(([n, t]) => `<button data-r="${n}" class="${n === (d.range || 0) ? 'on' : ''}">${t}</button>`).join('')}</div>
   <div class="kpis">
-    <div class="kpi"><b>${fmt(d.visitors)}</b><span>visitors</span></div>
+    <div class="kpi"><b>${fmt(d.visitors)}</b><span>visitors · ${label.toLowerCase()}</span></div>
+    <div class="kpi"><b>${fmt(d.newv)}</b><span>new visitors</span></div>
     <div class="kpi"><b>${fmt(d.visits)}</b><span>visits</span></div>
     <div class="kpi"><b>${fmt(d.opens)}</b><span>works opened</span></div>
     <div class="kpi"><b>${secs((d.ms || 0) / 1000 / Math.max(d.visits, 1))}</b><span>average visit</span></div>
@@ -121,9 +229,21 @@ function show(d) {
     <div class="acts"><a href="mailto:${esc(m.email)}?subject=${encodeURIComponent('Re: your message')}">Reply</a><button data-a="${m.unread ? 'read' : 'unread'}">${m.unread ? 'Mark as read' : 'Mark as new'}</button><button data-a="delete">Delete</button></div>
   </div>`).join('') : '<p class="empty">No messages yet. Messages sent from the Bio page arrive here.</p>'}
 
-  <h2>Visitors, last 30 days</h2>
-  <div class="bars">${days.map(x => `<div style="height:${Math.round(100 * x.v / dmax)}%" title="${x.k.slice(5)}: ${x.v} visitor${x.v === 1 ? '' : 's'}, ${x.o} work${x.o === 1 ? '' : 's'} opened"></div>`).join('')}</div>
-  <div class="axis"><span>${days[0].k.slice(5)}</span><span>today</span></div>
+  <h2>Where visitors are · ${esc(label.toLowerCase())}</h2>
+  <div id="map"></div>
+  <p class="note" id="mapnote"></p>
+
+  <h2>Visitors each day, last ${chartN} days</h2>
+  <div class="bars ${chartN > 45 ? 'long' : ''}">${chart.map(x => `<div style="height:${Math.round(100 * x.visitors / dmax)}%" title="${dayName(x.day)}: ${x.visitors} visitor${x.visitors === 1 ? '' : 's'}${x.newv ? ` (${x.newv} new)` : ''}, ${x.opens || 0} work${x.opens === 1 ? '' : 's'} opened"></div>`).join('')}</div>
+  <div class="axis"><span>${dayName(chart[0].day)}</span><span>today</span></div>
+  <p class="note">Today so far: ${fmt(byDay[today]?.visitors || 0)} visitor${(byDay[today]?.visitors || 0) === 1 ? '' : 's'} · average over the last 7 days: ${avg7.toFixed(1)} a day${best ? ` · busiest day: ${dayName(best.day)} with ${best.visitors}` : ''} · counting since ${dayName(start)}.</p>
+
+  <h2>Every day</h2>
+  <table class="daily">
+    <tr><th>Day</th><th class="n">Visitors</th><th class="n">New</th><th class="n">Visits</th><th class="n hide-s">Page views</th><th class="n">Works opened</th><th class="n hide-s">Time on site</th><th class="n hide-s">Countries</th></tr>
+    ${dayRows.map(x => `<tr class="${x.day === today ? 'today' : ''} ${x.visitors ? '' : 'zero'}"><td>${x.day === today ? 'Today' : dayName(x.day)}</td><td class="n">${fmt(x.visitors)}</td><td class="n">${fmt(x.newv)}</td><td class="n">${fmt(x.visits)}</td><td class="n hide-s">${fmt(x.views)}</td><td class="n">${fmt(x.opens)}</td><td class="n hide-s">${x.secs ? secs(x.secs) : '–'}</td><td class="n hide-s">${fmt(x.countries)}</td></tr>`).join('')}
+  </table>
+  <div class="row" style="margin-top:10px">${allDays.length > 14 ? `<button id="alld">${showAllDays ? 'Show the last 14 days' : `Show all ${fmt(allDays.length)} days`}</button>` : ''}<button id="csv">Download every day as a spreadsheet</button></div>
 
   <h2>The works</h2>
   ${table([
@@ -141,32 +261,52 @@ function show(d) {
     <div><h2>Pages</h2>${table([{ h: 'Page', f: p => p.page === 'bio' ? 'Bio' : 'Drawings' }, { h: 'Visitors', n: 1, f: p => fmt(p.visitors) }, { h: 'Average time', n: 1, f: p => secs(p.secs) }], d.pages)}
       <h2>Devices</h2>${table([{ h: 'Device', f: x => esc(x.dev) }, { h: 'Visitors', n: 1, f: x => fmt(x.visitors) }], d.devices)}</div>
   </div>
+  <h2>Pages that linked here</h2>
+  ${table([{ h: 'Page', f: x => esc(x.ref) }, { h: 'Visitors', n: 1, f: x => fmt(x.visitors) }, { h: 'Visits', n: 1, s: 1, f: x => fmt(x.visits) }], d.refs || [], 'None yet. Counted from the November 2026 update on (most visitors type the address or come from a link that doesn’t say where it was).')}
   <div class="cols">
-    <div><h2>Countries</h2>${table([{ h: 'Country', f: c => esc(c.country) }, { h: 'Visitors', n: 1, f: c => fmt(c.visitors) }], d.countries)}</div>
-    <div><h2>Cities</h2>${table([{ h: 'City', f: c => esc([c.city, c.region, c.country].filter(Boolean).join(', ')) }, { h: 'Visitors', n: 1, f: c => fmt(c.visitors) }], d.places)}</div>
+    ${small('Browsers', d.browsers, 'browser')}
+    ${small('Systems', d.oses, 'os')}
+  </div>
+  <div class="cols">
+    ${small('Languages', d.langs, 'lang', x => esc(lname(x.lang) || x.lang) + ` <span class="sub">${esc(x.lang)}</span>`)}
+    ${small('Screen sizes', d.screens, 'scr', x => esc(x.scr.replace('x', ' × ')))}
+  </div>
+  ${(d.camps || []).length || (d.lands || []).length ? `<div class="cols">${small('Campaigns (utm tags)', d.camps, 'camp')}${small('Arrived at', d.lands, 'land')}</div>` : ''}
+  <div class="cols">
+    <div><h2>Countries</h2>${table([{ h: 'Country', f: c => esc(cname(c.country)) }, { h: 'Visitors', n: 1, f: c => fmt(c.visitors) }], d.countries)}</div>
+    <div><h2>Cities</h2>${table([{ h: 'City', f: c => esc(placeName(c)) }, { h: 'Visitors', n: 1, f: c => fmt(c.visitors) }], d.places.slice(0, 40))}</div>
   </div>
   <h2>Networks</h2>
   <p class="sub" style="font-size:13px">The company or institution whose internet connection a visitor used, such as a museum, university or gallery (most people show their home internet provider).</p>
-  ${table([{ h: 'Network', f: o => esc(o.org) }, { h: 'Visitors', n: 1, f: o => fmt(o.visitors) }, { h: 'Visits', n: 1, s: 1, f: o => fmt(o.visits) }, { h: 'Last', n: 1, f: o => esc(o.last.slice(5)) }], d.orgs)}
+  ${table([{ h: 'Network', f: o => esc(o.org) + (ROBOT.test(o.org) ? ' <span class="sub">· data centre</span>' : '') }, { h: 'Visitors', n: 1, f: o => fmt(o.visitors) }, { h: 'Visits', n: 1, s: 1, f: o => fmt(o.visits) }, { h: 'Last', n: 1, f: o => esc(o.last.slice(5)) }], d.orgs)}
   <div class="cols">
     <div><h2>Coming back</h2>${table([{ h: '', f: x => x.name }, { h: 'Visitors', n: 1, f: x => fmt(x.visitors) }], d.returning.filter(x => x.visitors))}</div>
     <div><h2>Links followed</h2>${table([{ h: 'To', f: x => esc(x.k) }, { h: 'Visitors', n: 1, f: x => fmt(x.visitors) }], d.outs)}</div>
   </div>
-  <h2>Time of day (New York)</h2>
-  <div class="bars" style="height:70px">${hours.map((v, h) => `<div style="height:${Math.round(100 * v / hmax)}%" title="${h}:00 – ${v} visitor${v === 1 ? '' : 's'}"></div>`).join('')}</div>
-  <div class="axis"><span>midnight</span><span>noon</span><span>11 pm</span></div>
+  <div class="cols">
+    <div><h2>Time of day (New York)</h2>
+      <div class="bars" style="height:70px">${hours.map((v, h) => `<div style="height:${Math.round(100 * v / hmax)}%" title="${h}:00 – ${v} visitor${v === 1 ? '' : 's'}"></div>`).join('')}</div>
+      <div class="axis"><span>midnight</span><span>noon</span><span>11 pm</span></div></div>
+    <div><h2>Day of the week</h2>${table([{ h: '', f: x => x.name }, { h: 'Visitors', n: 1, f: x => meter(x.visitors, wdmax) + fmt(x.visitors) }], wds)}</div>
+  </div>
 
   <h2>Latest visits</h2>
-  ${visits.length ? visits.map(v => { const f = v.first; return `<div class="visit"><div class="head">${when(f.created)} · ${esc([f.city, f.region, f.country].filter(Boolean).join(', ') || 'somewhere')}${f.org ? ' · ' + esc(f.org) : ''} · ${esc(f.dev || '')} · from ${esc(f.src || 'direct')}</div><ol>${v.steps.map(s => `<li>${s}</li>`).join('')}</ol></div>`; }).join('') : '<p class="empty">No visits yet.</p>'}
+  ${visits.length ? visits.map(v => { const f = v.first; return `<div class="visit"><div class="head">${[when(f.created), esc(placeName(f) || 'somewhere'), f.org ? esc(f.org) : '', esc(f.dev || ''), [f.browser, f.os].filter(Boolean).map(esc).join(' on '), 'from ' + esc(f.ref || f.src || 'direct')].filter(Boolean).map(x => `<span>${x}</span>`).join('')}</div>
+    <div class="more">${[f.since && f.since < f.created.slice(0, 10) ? 'first came ' + dayName(f.since) : 'first visit', v.ms ? secs(v.ms / 1000) + ' on the site' : '', f.lang ? lname(f.lang) || f.lang : '', f.scr ? 'screen ' + f.scr.replace('x', ' × ') : '', f.camp ? 'campaign ' + f.camp : ''].filter(Boolean).map(esc).join(' · ')}</div>
+    <ol>${v.steps.map(s => `<li>${s}</li>`).join('')}</ol></div>`; }).join('') : '<p class="empty">No visits yet.</p>'}
   `;
   $('#nc').addEventListener('click', () => { ls('af-not-counted', counted ? '1' : null); show(d); });
   $('#rl').addEventListener('click', load);
+  $('#csv').addEventListener('click', downloadCsv);
+  const ad = $('#alld'); if (ad) ad.addEventListener('click', () => { showAllDays = !showAllDays; show(d); });
+  out.querySelectorAll('#range button').forEach(b => b.addEventListener('click', () => { range = +b.dataset.r; ls('af-stats-range', String(range)); load(); }));
   out.querySelectorAll('.msg button').forEach(b => b.addEventListener('click', async () => {
     const id = +b.closest('.msg').dataset.id, action = b.dataset.a;
     if (action === 'delete' && !confirm('Delete this message?')) return;
     await fetch('/api/message', { method: 'POST', headers: { Authorization: 'Bearer ' + key, 'Content-Type': 'application/json' }, body: JSON.stringify({ id, action }) });
     load();
   }));
+  drawMap(d);
 }
 load();
 </script>
